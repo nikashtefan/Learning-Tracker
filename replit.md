@@ -1,13 +1,21 @@
 # Overview
 
-This is a Learning Tracker ("Учебный трекер") web application built with React and Express, using TypeScript throughout. The application features a minimalist, clean UI built with shadcn/ui components and Radix UI primitives, styled with Tailwind CSS. 
+This is a Reading Goals / Learning Tracker ("Учебный трекер") web application built with React and Express, using TypeScript throughout. The application features a modern dark UI with purple/pink gradient accents, inspired by the ReadTracker app design. Built with shadcn/ui components and Radix UI primitives, styled with Tailwind CSS.
 
 The app allows users to:
-- Track learning habits (courses and books)
-- Mark daily completion for each habit
-- View weekly progress with animated circular progress indicator
-- See achievements section with completion percentage
+- Track learning habits (courses in purple, books in emerald green)
+- Mark daily completion with optional time tracking (minutes spent)
+- View "Reading Goals" circular progress with gradient animation
+- See monthly calendar heatmap showing activity intensity
+- Track reading streak (consecutive days)
+- View weekly progress per habit with animated progress bars
 - Reset progress or delete habits
+
+**Design Features:**
+- Dark theme with purple/pink gradient accents
+- Glass-card effects with backdrop blur
+- Smooth Framer Motion animations
+- Responsive layout for mobile and desktop
 
 All data is stored in browser localStorage for persistence without requiring a database.
 
