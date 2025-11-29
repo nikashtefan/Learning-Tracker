@@ -131,66 +131,80 @@ function MonthCalendar({ habits, monthDays }: { habits: Habit[]; monthDays: stri
   const firstDayOfMonth = new Date(monthDays[0]);
   const startPadding = (firstDayOfMonth.getDay() + 6) % 7;
   
-  const getIntensity = (day: string) => {
-    let totalMinutes = 0;
-    let hasCompletion = false;
-    habits.forEach(habit => {
-      if (habit.dayEntries[day]?.completed) {
-        hasCompletion = true;
-        totalMinutes += habit.dayEntries[day]?.minutes || 0;
-      }
-    });
-    if (!hasCompletion) return 0;
-    if (totalMinutes === 0) return 1;
-    if (totalMinutes < 30) return 1;
-    if (totalMinutes < 60) return 2;
-    if (totalMinutes < 120) return 3;
-    return 4;
+  const getDayProgress = (day: string) => {
+    const courses = habits.filter(h => h.type === "course");
+    const books = habits.filter(h => h.type === "book");
+    
+    const courseCompleted = courses.some(h => h.dayEntries[day]?.completed);
+    const bookCompleted = books.some(h => h.dayEntries[day]?.completed);
+    
+    return { courseCompleted, bookCompleted };
   };
-
-  const intensityColors = [
-    "bg-muted/30",
-    "bg-purple-500/30",
-    "bg-purple-500/50",
-    "bg-purple-500/70",
-    "bg-gradient-to-br from-purple-500 to-pink-500",
-  ];
 
   const dayLabels = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
   return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-7 gap-1 text-center">
+    <div className="space-y-2">
+      <div className="flex items-center justify-end gap-4 mb-2 text-[10px]">
+        <div className="flex items-center gap-1">
+          <div className="w-2 h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500" />
+          <span className="text-muted-foreground">Курсы</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-2 h-2 rounded-full bg-gradient-to-r from-rose-400 to-rose-600" />
+          <span className="text-muted-foreground">Книги</span>
+        </div>
+      </div>
+      <div className="grid grid-cols-7 gap-0.5 text-center">
         {dayLabels.map(label => (
-          <span key={label} className="text-[10px] text-muted-foreground uppercase">
+          <span key={label} className="text-[9px] text-muted-foreground uppercase py-1">
             {label}
           </span>
         ))}
       </div>
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-0.5">
         {Array.from({ length: startPadding }).map((_, i) => (
-          <div key={`pad-${i}`} className="aspect-square" />
+          <div key={`pad-${i}`} className="h-8" />
         ))}
         {monthDays.map(day => {
-          const intensity = getIntensity(day);
+          const { courseCompleted, bookCompleted } = getDayProgress(day);
           const isToday = day === today;
           const isFuture = day > today;
+          const hasAny = courseCompleted || bookCompleted;
           
           return (
             <motion.div
               key={day}
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              transition={{ delay: Math.random() * 0.3 }}
+              transition={{ delay: Math.random() * 0.2 }}
               className={`
-                aspect-square rounded-md flex items-center justify-center text-[10px]
-                ${intensityColors[intensity]}
-                ${isToday ? "ring-2 ring-purple-400 ring-offset-1 ring-offset-background" : ""}
+                h-8 rounded flex flex-col items-center justify-center relative
+                ${hasAny ? "bg-muted/40" : "bg-muted/20"}
+                ${isToday ? "ring-1 ring-purple-400" : ""}
                 ${isFuture ? "opacity-30" : ""}
                 transition-all duration-200
               `}
             >
-              {new Date(day).getDate()}
+              <span className="text-[9px] text-muted-foreground mb-0.5">
+                {new Date(day).getDate()}
+              </span>
+              <div className="flex gap-0.5">
+                <div 
+                  className={`w-1.5 h-1.5 rounded-full transition-all ${
+                    courseCompleted 
+                      ? "bg-gradient-to-r from-purple-500 to-pink-500 shadow-sm shadow-purple-500/50" 
+                      : "bg-muted/50"
+                  }`} 
+                />
+                <div 
+                  className={`w-1.5 h-1.5 rounded-full transition-all ${
+                    bookCompleted 
+                      ? "bg-gradient-to-r from-rose-400 to-rose-600 shadow-sm shadow-rose-500/50" 
+                      : "bg-muted/50"
+                  }`} 
+                />
+              </div>
             </motion.div>
           );
         })}
@@ -199,7 +213,7 @@ function MonthCalendar({ habits, monthDays }: { habits: Habit[]; monthDays: stri
   );
 }
 
-function StreakCounter({ habits, weekDays }: { habits: Habit[]; weekDays: string[] }) {
+function StreakCounter({ habits }: { habits: Habit[] }) {
   let streak = 0;
   const today = new Date();
   
@@ -284,7 +298,7 @@ function DayButton({
             relative flex flex-col items-center p-2 rounded-xl transition-all duration-300
             ${isCompleted 
               ? isBook 
-                ? "bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-500/30" 
+                ? "bg-gradient-to-br from-rose-400 to-rose-600 text-white shadow-lg shadow-rose-500/30" 
                 : "bg-gradient-to-br from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/30"
               : isToday 
                 ? "bg-purple-500/20 text-purple-300 ring-2 ring-purple-500/50" 
@@ -371,10 +385,10 @@ function HabitCard({
   const isBook = habit.type === "book";
   const Icon = isBook ? BookOpen : GraduationCap;
   const gradientClass = isBook 
-    ? "from-emerald-500/20 to-teal-500/20" 
+    ? "from-rose-400/20 to-rose-600/20" 
     : "from-purple-500/20 to-pink-500/20";
   const iconGradient = isBook
-    ? "from-emerald-500 to-teal-500"
+    ? "from-rose-400 to-rose-600"
     : "from-purple-500 to-pink-500";
 
   return (
@@ -398,7 +412,7 @@ function HabitCard({
                   {habit.name}
                 </h3>
                 <div className="flex items-center gap-3 mt-1">
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${isBook ? "bg-emerald-500/20 text-emerald-400" : "bg-purple-500/20 text-purple-400"}`}>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${isBook ? "bg-rose-500/20 text-rose-400" : "bg-purple-500/20 text-purple-400"}`}>
                     {habit.type === "course" ? "Курс" : "Книга"}
                   </span>
                   {totalMinutes > 0 && (
@@ -435,7 +449,7 @@ function HabitCard({
           <div className="flex items-center gap-2 mb-4">
             <div className="flex-1 h-2 bg-muted/30 rounded-full overflow-hidden">
               <motion.div 
-                className={`h-full bg-gradient-to-r ${isBook ? "from-emerald-500 to-teal-500" : "from-purple-500 to-pink-500"} rounded-full`}
+                className={`h-full bg-gradient-to-r ${isBook ? "from-rose-400 to-rose-600" : "from-purple-500 to-pink-500"} rounded-full`}
                 initial={{ width: 0 }}
                 animate={{ width: `${(completedThisWeek / 7) * 100}%` }}
                 transition={{ duration: 0.8, ease: "easeOut" }}
@@ -586,7 +600,7 @@ export default function Home() {
             <ReadingGoalsCircle todayMinutes={todayMinutes} goalMinutes={60} />
             
             <div className="flex flex-col gap-4">
-              <StreakCounter habits={habits} weekDays={weekDays} />
+              <StreakCounter habits={habits} />
               
               <div className="px-4 py-3 rounded-2xl glass-card">
                 <div className="flex items-center gap-3">
@@ -661,7 +675,7 @@ export default function Home() {
                     <Button
                       variant={newHabitType === "book" ? "default" : "outline"}
                       onClick={() => setNewHabitType("book")}
-                      className={`flex-1 ${newHabitType === "book" ? "bg-gradient-to-r from-emerald-500 to-teal-500" : "border-purple-500/30"}`}
+                      className={`flex-1 ${newHabitType === "book" ? "bg-gradient-to-r from-rose-400 to-rose-600" : "border-purple-500/30"}`}
                       data-testid="button-type-book"
                     >
                       <BookOpen className="w-4 h-4 mr-2" />
