@@ -1,6 +1,15 @@
 # Overview
 
-This is a full-stack web application built with React and Express, using TypeScript throughout. The application features a modern UI built with shadcn/ui components and Radix UI primitives, styled with Tailwind CSS. It's configured to run on Replit with support for Supabase as the backend database service. The project includes a test data management system with CRUD operations for test items.
+This is a Learning Tracker ("Учебный трекер") web application built with React and Express, using TypeScript throughout. The application features a minimalist, clean UI built with shadcn/ui components and Radix UI primitives, styled with Tailwind CSS. 
+
+The app allows users to:
+- Track learning habits (courses and books)
+- Mark daily completion for each habit
+- View weekly progress with animated circular progress indicator
+- See achievements section with completion percentage
+- Reset progress or delete habits
+
+All data is stored in browser localStorage for persistence without requiring a database.
 
 # User Preferences
 
