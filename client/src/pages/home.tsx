@@ -3,16 +3,22 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, BookOpen, Check, RotateCcw, Trash2, Trophy, Target } from "lucide-react";
+import { Plus, BookOpen, GraduationCap, Check, RotateCcw, Trash2, Trophy, Target, Clock } from "lucide-react";
+
+type TimeEntry = {
+  completed: boolean;
+  minutes?: number;
+};
 
 type Habit = {
   id: string;
   name: string;
   type: "course" | "book";
-  completedDays: string[];
+  dayEntries: Record<string, TimeEntry>;
   createdAt: string;
 };
 
@@ -36,6 +42,13 @@ function getWeekDays(): string[] {
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr);
   return date.toLocaleDateString("ru-RU", { weekday: "short", day: "numeric" });
+}
+
+function formatTime(minutes: number): string {
+  if (minutes < 60) return `${minutes} мин`;
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return mins > 0 ? `${hours}ч ${mins}м` : `${hours}ч`;
 }
 
 function CircularProgress({ percentage }: { percentage: number }) {
@@ -84,23 +97,146 @@ function CircularProgress({ percentage }: { percentage: number }) {
   );
 }
 
+function DayButton({
+  day,
+  entry,
+  isToday,
+  isFuture,
+  habitType,
+  onUpdate,
+}: {
+  day: string;
+  entry?: TimeEntry;
+  isToday: boolean;
+  isFuture: boolean;
+  habitType: "course" | "book";
+  onUpdate: (day: string, entry: TimeEntry | null) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [timeInput, setTimeInput] = useState("");
+  const isCompleted = entry?.completed;
+  
+  const isBook = habitType === "book";
+  const completedBg = isBook ? "bg-emerald-500" : "bg-primary";
+  const completedText = isBook ? "text-white" : "text-primary-foreground";
+  const todayBg = isBook ? "bg-emerald-500/10" : "bg-primary/10";
+  const todayText = isBook ? "text-emerald-600" : "text-primary";
+  const todayRing = isBook ? "ring-emerald-500/30" : "ring-primary/30";
+
+  const handleSave = () => {
+    const minutes = timeInput ? parseInt(timeInput, 10) : undefined;
+    onUpdate(day, { completed: true, minutes: minutes && !isNaN(minutes) ? minutes : undefined });
+    setIsOpen(false);
+    setTimeInput("");
+  };
+
+  const handleRemove = () => {
+    onUpdate(day, null);
+    setIsOpen(false);
+    setTimeInput("");
+  };
+
+  const handleQuickToggle = () => {
+    if (isFuture) return;
+    if (isCompleted) {
+      onUpdate(day, null);
+    } else {
+      setIsOpen(true);
+    }
+  };
+
+  return (
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <PopoverTrigger asChild>
+        <button
+          onClick={handleQuickToggle}
+          disabled={isFuture}
+          className={`
+            relative flex flex-col items-center p-2 rounded-lg transition-all duration-200
+            ${isCompleted 
+              ? `${completedBg} ${completedText}` 
+              : isToday 
+                ? `${todayBg} ${todayText} ring-2 ${todayRing}` 
+                : "bg-muted/50 text-muted-foreground hover:bg-muted"
+            }
+            ${isFuture ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}
+          `}
+        >
+          <span className="text-[10px] font-medium uppercase">
+            {formatDate(day).split(",")[0]}
+          </span>
+          <span className="text-xs mt-0.5">
+            {new Date(day).getDate()}
+          </span>
+          {isCompleted && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="absolute -top-1 -right-1"
+            >
+              <Check className={`w-3 h-3 ${isBook ? "bg-emerald-600" : "bg-green-500"} text-white rounded-full p-0.5`} />
+            </motion.div>
+          )}
+          {entry?.minutes && (
+            <span className="text-[9px] mt-0.5 opacity-80">
+              {formatTime(entry.minutes)}
+            </span>
+          )}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-56 p-3">
+        <div className="space-y-3">
+          <p className="text-sm font-medium">Отметить выполнение</p>
+          <div className="flex items-center gap-2">
+            <Clock className="w-4 h-4 text-muted-foreground" />
+            <Input
+              type="number"
+              placeholder="Минуты (необяз.)"
+              value={timeInput}
+              onChange={(e) => setTimeInput(e.target.value)}
+              className="h-8"
+              data-testid="input-time"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button size="sm" onClick={handleSave} className="flex-1" data-testid="button-save-day">
+              Сохранить
+            </Button>
+            {isCompleted && (
+              <Button size="sm" variant="outline" onClick={handleRemove} data-testid="button-remove-day">
+                Убрать
+              </Button>
+            )}
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function HabitCard({ 
   habit, 
   weekDays, 
   today, 
-  onToggle, 
+  onUpdateDay, 
   onReset, 
   onDelete 
 }: { 
   habit: Habit; 
   weekDays: string[]; 
   today: string;
-  onToggle: (habitId: string, day: string) => void;
+  onUpdateDay: (habitId: string, day: string, entry: TimeEntry | null) => void;
   onReset: (habitId: string) => void;
   onDelete: (habitId: string) => void;
 }) {
-  const completedThisWeek = weekDays.filter(day => habit.completedDays.includes(day)).length;
+  const completedThisWeek = weekDays.filter(day => habit.dayEntries[day]?.completed).length;
   const progress = (completedThisWeek / 7) * 100;
+  const totalMinutes = weekDays.reduce((acc, day) => acc + (habit.dayEntries[day]?.minutes || 0), 0);
+  
+  const isBook = habit.type === "book";
+  const iconBg = isBook ? "bg-emerald-500/10" : "bg-primary/10";
+  const iconColor = isBook ? "text-emerald-600" : "text-primary";
+  const Icon = isBook ? BookOpen : GraduationCap;
 
   return (
     <motion.div
@@ -114,14 +250,14 @@ function HabitCard({
         <CardContent className="p-5">
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <BookOpen className="w-5 h-5 text-primary" />
+              <div className={`p-2 rounded-lg ${iconBg}`}>
+                <Icon className={`w-5 h-5 ${iconColor}`} />
               </div>
               <div>
                 <h3 className="font-semibold text-foreground" data-testid={`habit-name-${habit.id}`}>
                   {habit.name}
                 </h3>
-                <p className="text-sm text-muted-foreground">
+                <p className={`text-sm ${isBook ? "text-emerald-600" : "text-muted-foreground"}`}>
                   {habit.type === "course" ? "Курс" : "Книга"}
                 </p>
               </div>
@@ -151,52 +287,34 @@ function HabitCard({
           <div className="mb-4">
             <div className="flex justify-between text-sm mb-2">
               <span className="text-muted-foreground">Прогресс недели</span>
-              <span className="font-medium">{completedThisWeek}/7</span>
+              <div className="flex items-center gap-3">
+                {totalMinutes > 0 && (
+                  <span className="text-muted-foreground flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    {formatTime(totalMinutes)}
+                  </span>
+                )}
+                <span className="font-medium">{completedThisWeek}/7</span>
+              </div>
             </div>
-            <Progress value={progress} className="h-2" />
+            <Progress 
+              value={progress} 
+              className={`h-2 ${isBook ? "[&>div]:bg-emerald-500" : ""}`} 
+            />
           </div>
 
           <div className="grid grid-cols-7 gap-1">
-            {weekDays.map((day) => {
-              const isCompleted = habit.completedDays.includes(day);
-              const isToday = day === today;
-              const isFuture = day > today;
-
-              return (
-                <button
-                  key={day}
-                  onClick={() => !isFuture && onToggle(habit.id, day)}
-                  disabled={isFuture}
-                  data-testid={`day-${habit.id}-${day}`}
-                  className={`
-                    relative flex flex-col items-center p-2 rounded-lg transition-all duration-200
-                    ${isCompleted 
-                      ? "bg-primary text-primary-foreground" 
-                      : isToday 
-                        ? "bg-primary/10 text-primary ring-2 ring-primary/30" 
-                        : "bg-muted/50 text-muted-foreground hover:bg-muted"
-                    }
-                    ${isFuture ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}
-                  `}
-                >
-                  <span className="text-[10px] font-medium uppercase">
-                    {formatDate(day).split(",")[0]}
-                  </span>
-                  <span className="text-xs mt-0.5">
-                    {new Date(day).getDate()}
-                  </span>
-                  {isCompleted && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="absolute -top-1 -right-1"
-                    >
-                      <Check className="w-3 h-3 text-primary-foreground bg-green-500 rounded-full p-0.5" />
-                    </motion.div>
-                  )}
-                </button>
-              );
-            })}
+            {weekDays.map((day) => (
+              <DayButton
+                key={day}
+                day={day}
+                entry={habit.dayEntries[day]}
+                isToday={day === today}
+                isFuture={day > today}
+                habitType={habit.type}
+                onUpdate={(d, entry) => onUpdateDay(habit.id, d, entry)}
+              />
+            ))}
           </div>
         </CardContent>
       </Card>
@@ -217,7 +335,18 @@ export default function Home() {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       try {
-        setHabits(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        const migrated = parsed.map((habit: any) => {
+          if (habit.completedDays && !habit.dayEntries) {
+            const dayEntries: Record<string, TimeEntry> = {};
+            habit.completedDays.forEach((day: string) => {
+              dayEntries[day] = { completed: true };
+            });
+            return { ...habit, dayEntries, completedDays: undefined };
+          }
+          return habit;
+        });
+        setHabits(migrated);
       } catch {
         console.error("Failed to parse stored habits");
       }
@@ -240,7 +369,7 @@ export default function Home() {
       id: Date.now().toString(),
       name: newHabitName.trim(),
       type: newHabitType,
-      completedDays: [],
+      dayEntries: {},
       createdAt: new Date().toISOString(),
     };
 
@@ -250,17 +379,17 @@ export default function Home() {
     toast.success("Привычка добавлена!");
   }, [newHabitName, newHabitType]);
 
-  const toggleDay = useCallback((habitId: string, day: string) => {
+  const updateDay = useCallback((habitId: string, day: string, entry: TimeEntry | null) => {
     setHabits((prev) =>
       prev.map((habit) => {
         if (habit.id !== habitId) return habit;
-        const isCompleted = habit.completedDays.includes(day);
-        return {
-          ...habit,
-          completedDays: isCompleted
-            ? habit.completedDays.filter((d) => d !== day)
-            : [...habit.completedDays, day],
-        };
+        const newEntries = { ...habit.dayEntries };
+        if (entry) {
+          newEntries[day] = entry;
+        } else {
+          delete newEntries[day];
+        }
+        return { ...habit, dayEntries: newEntries };
       })
     );
   }, []);
@@ -268,7 +397,7 @@ export default function Home() {
   const resetHabit = useCallback((habitId: string) => {
     setHabits((prev) =>
       prev.map((habit) =>
-        habit.id === habitId ? { ...habit, completedDays: [] } : habit
+        habit.id === habitId ? { ...habit, dayEntries: {} } : habit
       )
     );
     toast.success("Прогресс сброшен");
@@ -281,10 +410,14 @@ export default function Home() {
 
   const totalDaysThisWeek = habits.length * 7;
   const completedDaysThisWeek = habits.reduce(
-    (acc, habit) => acc + weekDays.filter((day) => habit.completedDays.includes(day)).length,
+    (acc, habit) => acc + weekDays.filter((day) => habit.dayEntries[day]?.completed).length,
     0
   );
   const weeklyProgress = totalDaysThisWeek > 0 ? (completedDaysThisWeek / totalDaysThisWeek) * 100 : 0;
+  const totalWeekMinutes = habits.reduce(
+    (acc, habit) => acc + weekDays.reduce((sum, day) => sum + (habit.dayEntries[day]?.minutes || 0), 0),
+    0
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -325,6 +458,12 @@ export default function Home() {
                   <p className="text-muted-foreground">
                     выполненных занятий за эту неделю
                   </p>
+                  {totalWeekMinutes > 0 && (
+                    <p className="mt-1 text-muted-foreground flex items-center gap-1 justify-center sm:justify-start">
+                      <Clock className="w-4 h-4" />
+                      Всего: {formatTime(totalWeekMinutes)}
+                    </p>
+                  )}
                   {weeklyProgress >= 80 && (
                     <motion.p 
                       className="mt-2 text-green-600 font-medium flex items-center gap-1"
@@ -383,14 +522,16 @@ export default function Home() {
                       className="flex-1"
                       data-testid="button-type-course"
                     >
+                      <GraduationCap className="w-4 h-4 mr-2" />
                       Курс
                     </Button>
                     <Button
                       variant={newHabitType === "book" ? "default" : "outline"}
                       onClick={() => setNewHabitType("book")}
-                      className="flex-1"
+                      className={`flex-1 ${newHabitType === "book" ? "bg-emerald-500 hover:bg-emerald-600" : ""}`}
                       data-testid="button-type-book"
                     >
+                      <BookOpen className="w-4 h-4 mr-2" />
                       Книга
                     </Button>
                   </div>
@@ -429,7 +570,7 @@ export default function Home() {
                     habit={habit}
                     weekDays={weekDays}
                     today={today}
-                    onToggle={toggleDay}
+                    onUpdateDay={updateDay}
                     onReset={resetHabit}
                     onDelete={deleteHabit}
                   />
