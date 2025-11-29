@@ -1,232 +1,443 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Plus, BookOpen, Check, RotateCcw, Trash2, Trophy, Target } from "lucide-react";
 
-type TestItem = {
-  id: number;
-  title: string;
-  description: string | null;
-  createdAt: Date;
+type Habit = {
+  id: string;
+  name: string;
+  type: "course" | "book";
+  completedDays: string[];
+  createdAt: string;
 };
 
-export default function Home() {
-  const queryClient = useQueryClient();
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+const STORAGE_KEY = "learning-tracker-habits";
 
-  const { data: items, isLoading } = useQuery<TestItem[]>({
-    queryKey: ["test-items"],
-    queryFn: async () => {
-      const res = await fetch("/api/test-items");
-      if (!res.ok) throw new Error("Failed to fetch items");
-      return res.json();
-    },
-  });
+function getWeekDays(): string[] {
+  const today = new Date();
+  const days: string[] = [];
+  const dayOfWeek = today.getDay();
+  const startOfWeek = new Date(today);
+  startOfWeek.setDate(today.getDate() - ((dayOfWeek + 6) % 7));
+  
+  for (let i = 0; i < 7; i++) {
+    const day = new Date(startOfWeek);
+    day.setDate(startOfWeek.getDate() + i);
+    days.push(day.toISOString().split("T")[0]);
+  }
+  return days;
+}
 
-  const createMutation = useMutation({
-    mutationFn: async (data: { title: string; description: string | null }) => {
-      const res = await fetch("/api/test-items", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) throw new Error("Failed to create item");
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["test-items"] });
-      setTitle("");
-      setDescription("");
-      toast.success("Запись успешно создана!");
-    },
-    onError: () => {
-      toast.error("Ошибка при создании записи");
-    },
-  });
+function formatDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString("ru-RU", { weekday: "short", day: "numeric" });
+}
 
-  const seedMutation = useMutation({
-    mutationFn: async () => {
-      const res = await fetch("/api/seed", { method: "POST" });
-      if (!res.ok) throw new Error("Failed to seed database");
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["test-items"] });
-      toast.success("База данных успешно наполнена!");
-    },
-    onError: () => {
-      toast.error("Ошибка при наполнении базы данных");
-    },
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    createMutation.mutate({
-      title,
-      description: description || null,
-    });
-  };
+function CircularProgress({ percentage }: { percentage: number }) {
+  const radius = 45;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 p-8">
-      <div className="max-w-6xl mx-auto space-y-8">
-        <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold text-slate-900 dark:text-slate-50">
-            Supabase + Replit
-          </h1>
-          <p className="text-lg text-slate-600 dark:text-slate-400">
-            Проект настроен для работы с Supabase
-          </p>
-        </div>
+    <div className="relative w-32 h-32">
+      <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 100 100">
+        <circle
+          cx="50"
+          cy="50"
+          r={radius}
+          stroke="currentColor"
+          strokeWidth="8"
+          fill="none"
+          className="text-muted/50"
+        />
+        <motion.circle
+          cx="50"
+          cy="50"
+          r={radius}
+          stroke="currentColor"
+          strokeWidth="8"
+          fill="none"
+          strokeLinecap="round"
+          className="text-primary"
+          initial={{ strokeDashoffset: circumference }}
+          animate={{ strokeDashoffset }}
+          transition={{ duration: 1, ease: "easeOut" }}
+          style={{ strokeDasharray: circumference }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <motion.span 
+          className="text-2xl font-bold text-foreground"
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          {Math.round(percentage)}%
+        </motion.span>
+      </div>
+    </div>
+  );
+}
 
-        <div className="grid md:grid-cols-2 gap-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Добавить запись</CardTitle>
-              <CardDescription>
-                Создайте новую тестовую запись в базе данных
-              </CardDescription>
+function HabitCard({ 
+  habit, 
+  weekDays, 
+  today, 
+  onToggle, 
+  onReset, 
+  onDelete 
+}: { 
+  habit: Habit; 
+  weekDays: string[]; 
+  today: string;
+  onToggle: (habitId: string, day: string) => void;
+  onReset: (habitId: string) => void;
+  onDelete: (habitId: string) => void;
+}) {
+  const completedThisWeek = weekDays.filter(day => habit.completedDays.includes(day)).length;
+  const progress = (completedThisWeek / 7) * 100;
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, x: -100 }}
+      transition={{ duration: 0.3 }}
+    >
+      <Card className="group hover:shadow-md transition-shadow duration-300">
+        <CardContent className="p-5">
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <BookOpen className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground" data-testid={`habit-name-${habit.id}`}>
+                  {habit.name}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {habit.type === "course" ? "Курс" : "Книга"}
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => onReset(habit.id)}
+                data-testid={`button-reset-${habit.id}`}
+              >
+                <RotateCcw className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-destructive hover:text-destructive"
+                onClick={() => onDelete(habit.id)}
+                data-testid={`button-delete-${habit.id}`}
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+
+          <div className="mb-4">
+            <div className="flex justify-between text-sm mb-2">
+              <span className="text-muted-foreground">Прогресс недели</span>
+              <span className="font-medium">{completedThisWeek}/7</span>
+            </div>
+            <Progress value={progress} className="h-2" />
+          </div>
+
+          <div className="grid grid-cols-7 gap-1">
+            {weekDays.map((day) => {
+              const isCompleted = habit.completedDays.includes(day);
+              const isToday = day === today;
+              const isFuture = day > today;
+
+              return (
+                <button
+                  key={day}
+                  onClick={() => !isFuture && onToggle(habit.id, day)}
+                  disabled={isFuture}
+                  data-testid={`day-${habit.id}-${day}`}
+                  className={`
+                    relative flex flex-col items-center p-2 rounded-lg transition-all duration-200
+                    ${isCompleted 
+                      ? "bg-primary text-primary-foreground" 
+                      : isToday 
+                        ? "bg-primary/10 text-primary ring-2 ring-primary/30" 
+                        : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                    }
+                    ${isFuture ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}
+                  `}
+                >
+                  <span className="text-[10px] font-medium uppercase">
+                    {formatDate(day).split(",")[0]}
+                  </span>
+                  <span className="text-xs mt-0.5">
+                    {new Date(day).getDate()}
+                  </span>
+                  {isCompleted && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute -top-1 -right-1"
+                    >
+                      <Check className="w-3 h-3 text-primary-foreground bg-green-500 rounded-full p-0.5" />
+                    </motion.div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}
+
+export default function Home() {
+  const [habits, setHabits] = useState<Habit[]>([]);
+  const [newHabitName, setNewHabitName] = useState("");
+  const [newHabitType, setNewHabitType] = useState<"course" | "book">("course");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const weekDays = getWeekDays();
+  const today = new Date().toISOString().split("T")[0];
+
+  useEffect(() => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      try {
+        setHabits(JSON.parse(stored));
+      } catch {
+        console.error("Failed to parse stored habits");
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (habits.length > 0 || localStorage.getItem(STORAGE_KEY)) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(habits));
+    }
+  }, [habits]);
+
+  const addHabit = useCallback(() => {
+    if (!newHabitName.trim()) {
+      toast.error("Введите название");
+      return;
+    }
+
+    const newHabit: Habit = {
+      id: Date.now().toString(),
+      name: newHabitName.trim(),
+      type: newHabitType,
+      completedDays: [],
+      createdAt: new Date().toISOString(),
+    };
+
+    setHabits((prev) => [...prev, newHabit]);
+    setNewHabitName("");
+    setIsDialogOpen(false);
+    toast.success("Привычка добавлена!");
+  }, [newHabitName, newHabitType]);
+
+  const toggleDay = useCallback((habitId: string, day: string) => {
+    setHabits((prev) =>
+      prev.map((habit) => {
+        if (habit.id !== habitId) return habit;
+        const isCompleted = habit.completedDays.includes(day);
+        return {
+          ...habit,
+          completedDays: isCompleted
+            ? habit.completedDays.filter((d) => d !== day)
+            : [...habit.completedDays, day],
+        };
+      })
+    );
+  }, []);
+
+  const resetHabit = useCallback((habitId: string) => {
+    setHabits((prev) =>
+      prev.map((habit) =>
+        habit.id === habitId ? { ...habit, completedDays: [] } : habit
+      )
+    );
+    toast.success("Прогресс сброшен");
+  }, []);
+
+  const deleteHabit = useCallback((habitId: string) => {
+    setHabits((prev) => prev.filter((habit) => habit.id !== habitId));
+    toast.success("Привычка удалена");
+  }, []);
+
+  const totalDaysThisWeek = habits.length * 7;
+  const completedDaysThisWeek = habits.reduce(
+    (acc, habit) => acc + weekDays.filter((day) => habit.completedDays.includes(day)).length,
+    0
+  );
+  const weeklyProgress = totalDaysThisWeek > 0 ? (completedDaysThisWeek / totalDaysThisWeek) * 100 : 0;
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <motion.header 
+          className="text-center mb-10"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <h1 className="text-3xl font-bold text-foreground mb-2" data-testid="app-title">
+            Учебный трекер
+          </h1>
+          <p className="text-muted-foreground">
+            Отслеживайте прогресс в изучении курсов и книг
+          </p>
+        </motion.header>
+
+        <motion.section 
+          className="mb-10"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Trophy className="w-5 h-5 text-primary" />
+                Мои достижения
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Заголовок</Label>
-                  <Input
-                    id="title"
-                    data-testid="input-title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Введите заголовок"
-                    required
-                  />
+              <div className="flex flex-col sm:flex-row items-center gap-6">
+                <CircularProgress percentage={weeklyProgress} />
+                <div className="text-center sm:text-left">
+                  <p className="text-2xl font-bold text-foreground" data-testid="weekly-stats">
+                    {completedDaysThisWeek} из {totalDaysThisWeek}
+                  </p>
+                  <p className="text-muted-foreground">
+                    выполненных занятий за эту неделю
+                  </p>
+                  {weeklyProgress >= 80 && (
+                    <motion.p 
+                      className="mt-2 text-green-600 font-medium flex items-center gap-1"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                    >
+                      <Target className="w-4 h-4" />
+                      Отличный результат!
+                    </motion.p>
+                  )}
+                  {weeklyProgress >= 50 && weeklyProgress < 80 && (
+                    <motion.p 
+                      className="mt-2 text-amber-600 font-medium"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                    >
+                      Хороший прогресс!
+                    </motion.p>
+                  )}
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="description">Описание</Label>
-                  <Textarea
-                    id="description"
-                    data-testid="input-description"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Введите описание (необязательно)"
-                    rows={3}
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  data-testid="button-create"
-                  disabled={createMutation.isPending}
-                  className="w-full"
-                >
-                  {createMutation.isPending ? "Создание..." : "Создать запись"}
-                </Button>
-              </form>
-
-              <div className="mt-6 pt-6 border-t">
-                <Button
-                  onClick={() => seedMutation.mutate()}
-                  disabled={seedMutation.isPending}
-                  variant="outline"
-                  data-testid="button-seed"
-                  className="w-full"
-                >
-                  {seedMutation.isPending
-                    ? "Наполнение..."
-                    : "Наполнить БД тестовыми данными"}
-                </Button>
               </div>
             </CardContent>
           </Card>
+        </motion.section>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Записи из базы данных</CardTitle>
-              <CardDescription>
-                {items?.length || 0} записей найдено
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <p className="text-slate-500">Загрузка...</p>
-              ) : items && items.length > 0 ? (
-                <div className="space-y-3 max-h-96 overflow-y-auto">
-                  {items.map((item) => (
-                    <div
-                      key={item.id}
-                      data-testid={`item-${item.id}`}
-                      className="p-4 bg-slate-50 dark:bg-slate-900 rounded-lg space-y-1"
+        <section>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold text-foreground">
+              Мои курсы и книги
+            </h2>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button data-testid="button-add-habit" className="gap-2">
+                  <Plus className="w-4 h-4" />
+                  Добавить привычку
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Новая учебная привычка</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 mt-4">
+                  <div>
+                    <Input
+                      placeholder="Название курса или книги"
+                      value={newHabitName}
+                      onChange={(e) => setNewHabitName(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && addHabit()}
+                      data-testid="input-habit-name"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant={newHabitType === "course" ? "default" : "outline"}
+                      onClick={() => setNewHabitType("course")}
+                      className="flex-1"
+                      data-testid="button-type-course"
                     >
-                      <h3
-                        className="font-semibold text-slate-900 dark:text-slate-50"
-                        data-testid={`title-${item.id}`}
-                      >
-                        {item.title}
-                      </h3>
-                      {item.description && (
-                        <p
-                          className="text-sm text-slate-600 dark:text-slate-400"
-                          data-testid={`description-${item.id}`}
-                        >
-                          {item.description}
-                        </p>
-                      )}
-                      <p className="text-xs text-slate-500">ID: {item.id}</p>
-                    </div>
-                  ))}
+                      Курс
+                    </Button>
+                    <Button
+                      variant={newHabitType === "book" ? "default" : "outline"}
+                      onClick={() => setNewHabitType("book")}
+                      className="flex-1"
+                      data-testid="button-type-book"
+                    >
+                      Книга
+                    </Button>
+                  </div>
+                  <Button onClick={addHabit} className="w-full" data-testid="button-confirm-add">
+                    Добавить
+                  </Button>
                 </div>
-              ) : (
-                <p className="text-slate-500">
-                  Нет записей. Нажмите кнопку "Наполнить БД" для добавления
-                  тестовых данных.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+              </DialogContent>
+            </Dialog>
+          </div>
 
-        <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
-          <CardHeader>
-            <CardTitle className="text-blue-900 dark:text-blue-50">
-              📝 Инструкция по настройке
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-blue-800 dark:text-blue-200 space-y-4">
-            <div>
-              <h4 className="font-semibold mb-2">
-                Шаг 1: Создайте таблицы в Supabase
-              </h4>
-              <p className="text-sm">
-                Из-за сетевых ограничений Replit, выполните SQL из файла{" "}
-                <code className="bg-blue-100 dark:bg-blue-900 px-2 py-1 rounded">
-                  migrations/init.sql
-                </code>{" "}
-                в Supabase Dashboard → SQL Editor
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-2">
-                Шаг 2: Проверьте работу
-              </h4>
-              <p className="text-sm">
-                После выполнения SQL, нажмите "Наполнить БД тестовыми данными"
-                выше или обновите страницу, чтобы увидеть записи.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-2">Документация</h4>
-              <p className="text-sm">
-                Подробная инструкция в файле{" "}
-                <code className="bg-blue-100 dark:bg-blue-900 px-2 py-1 rounded">
-                  SUPABASE_SETUP.md
-                </code>
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+          <AnimatePresence mode="popLayout">
+            {habits.length === 0 ? (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-center py-16"
+              >
+                <BookOpen className="w-16 h-16 mx-auto text-muted-foreground/30 mb-4" />
+                <p className="text-muted-foreground mb-4">
+                  У вас пока нет учебных привычек
+                </p>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDialogOpen(true)}
+                  data-testid="button-add-first"
+                >
+                  Добавить первую привычку
+                </Button>
+              </motion.div>
+            ) : (
+              <div className="grid gap-4">
+                {habits.map((habit) => (
+                  <HabitCard
+                    key={habit.id}
+                    habit={habit}
+                    weekDays={weekDays}
+                    today={today}
+                    onToggle={toggleDay}
+                    onReset={resetHabit}
+                    onDelete={deleteHabit}
+                  />
+                ))}
+              </div>
+            )}
+          </AnimatePresence>
+        </section>
       </div>
     </div>
   );
