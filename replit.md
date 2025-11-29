@@ -104,9 +104,10 @@ Preferred communication style: Simple, everyday language.
 
 ## Database Service
 - **Supabase** - Managed PostgreSQL database service
-  - Accessed via Supabase JS client (`@supabase/supabase-js`)
-  - Direct PostgreSQL access via Drizzle ORM
-  - Note: Replit network restrictions prevent direct migration execution; migrations must be run via Supabase Dashboard SQL Editor
+  - Accessed via Supabase JS client REST API (`@supabase/supabase-js`)
+  - Using `supabaseAdmin` client with service_role key for server-side operations
+  - Storage layer (`SupabaseStorage`) provides CRUD operations via REST API
+  - Note: Direct PostgreSQL connections are blocked by Replit network restrictions, so we use Supabase REST API instead
 
 ## Development Tools
 - **Replit Platform Integration**

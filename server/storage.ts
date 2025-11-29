@@ -1,6 +1,21 @@
-import { eq } from "drizzle-orm";
-import { db } from "./db";
-import { type User, type InsertUser, type TestItem, type InsertTestItem, users, testItems } from "@shared/schema";
+import { supabaseAdmin } from "./supabase";
+import { type User, type InsertUser, type TestItem, type InsertTestItem } from "@shared/schema";
+
+type SupabaseTestItem = {
+  id: number;
+  title: string;
+  description: string | null;
+  created_at: string;
+};
+
+function mapTestItem(item: SupabaseTestItem): TestItem {
+  return {
+    id: item.id,
+    title: item.title,
+    description: item.description,
+    createdAt: new Date(item.created_at),
+  };
+}
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -12,35 +27,71 @@ export interface IStorage {
   createTestItem(item: InsertTestItem): Promise<TestItem>;
 }
 
-export class DbStorage implements IStorage {
+export class SupabaseStorage implements IStorage {
   async getUser(id: string): Promise<User | undefined> {
-    const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
-    return result[0];
+    const { data, error } = await supabaseAdmin
+      .from('users')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error || !data) return undefined;
+    return data as User;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const result = await db.select().from(users).where(eq(users.username, username)).limit(1);
-    return result[0];
+    const { data, error } = await supabaseAdmin
+      .from('users')
+      .select('*')
+      .eq('username', username)
+      .single();
+    
+    if (error || !data) return undefined;
+    return data as User;
   }
 
   async createUser(user: InsertUser): Promise<User> {
-    const result = await db.insert(users).values(user).returning();
-    return result[0];
+    const { data, error } = await supabaseAdmin
+      .from('users')
+      .insert(user)
+      .select()
+      .single();
+    
+    if (error) throw new Error(error.message);
+    return data as User;
   }
 
   async getAllTestItems(): Promise<TestItem[]> {
-    return await db.select().from(testItems);
+    const { data, error } = await supabaseAdmin
+      .from('test_items')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) throw new Error(error.message);
+    return (data || []).map(mapTestItem);
   }
 
   async getTestItem(id: number): Promise<TestItem | undefined> {
-    const result = await db.select().from(testItems).where(eq(testItems.id, id)).limit(1);
-    return result[0];
+    const { data, error } = await supabaseAdmin
+      .from('test_items')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error || !data) return undefined;
+    return mapTestItem(data);
   }
 
   async createTestItem(item: InsertTestItem): Promise<TestItem> {
-    const result = await db.insert(testItems).values(item).returning();
-    return result[0];
+    const { data, error } = await supabaseAdmin
+      .from('test_items')
+      .insert(item)
+      .select()
+      .single();
+    
+    if (error) throw new Error(error.message);
+    return mapTestItem(data);
   }
 }
 
-export const storage = new DbStorage();
+export const storage = new SupabaseStorage();
