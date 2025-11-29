@@ -114,7 +114,7 @@ function ReadingGoalsCircle({
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="text-xs text-[#bd7880] uppercase tracking-widest mb-1">
-          Today's Reading
+          Сегодня
         </span>
         <motion.span 
           className="text-5xl font-bold gradient-text"
@@ -125,7 +125,7 @@ function ReadingGoalsCircle({
           {todayMinutes}
         </motion.span>
         <span className="text-sm text-[#bd7880] mt-1">
-          of your {goalMinutes}-min goal
+          из {goalMinutes} мин цели
         </span>
       </div>
     </div>
@@ -241,7 +241,7 @@ function StreakCounter({ habits }: { habits: Habit[] }) {
       </div>
       <div>
         <p className="text-2xl font-bold" style={{ color: COLORS.wine }}>{streak}</p>
-        <p className="text-xs text-[#bd7880]">Reading Streak</p>
+        <p className="text-xs text-[#bd7880]">Дней подряд</p>
       </div>
     </div>
   );
@@ -596,10 +596,10 @@ export default function Home() {
           animate={{ opacity: 1, y: 0 }}
         >
           <h1 className="text-4xl font-bold mb-2" data-testid="app-title">
-            <span className="gradient-text">Reading Goals</span>
+            <span className="gradient-text">Учебный трекер</span>
           </h1>
           <p style={{ color: COLORS.rose }}>
-            See your stats soar. Finish more books.
+            Отслеживайте прогресс. Достигайте целей.
           </p>
         </motion.header>
 
@@ -622,7 +622,7 @@ export default function Home() {
                   </div>
                   <div>
                     <p className="text-2xl font-bold" style={{ color: COLORS.pine }}>{habits.length}</p>
-                    <p className="text-xs" style={{ color: COLORS.rose }}>Active Goals</p>
+                    <p className="text-xs" style={{ color: COLORS.rose }}>Активных целей</p>
                   </div>
                 </div>
               </div>
