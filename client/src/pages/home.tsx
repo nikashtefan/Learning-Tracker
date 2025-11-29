@@ -585,7 +585,7 @@ export default function Home() {
   const currentMonth = new Date().toLocaleDateString("ru-RU", { month: "long", year: "numeric" });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#E0CBB9] via-[#ebe0d6] to-[#E0CBB9] relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-[#9a7b7b] via-[#a88888] to-[#9a7b7b] relative overflow-hidden">
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#bd7880]/10 rounded-full blur-3xl" />
       <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#102b1f]/5 rounded-full blur-3xl" />
       
