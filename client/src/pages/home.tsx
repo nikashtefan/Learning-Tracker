@@ -2,11 +2,12 @@ import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, BookOpen, GraduationCap, Check, RotateCcw, Trash2, Clock, Flame, Target, X, LogOut } from "lucide-react";
+import { Plus, BookOpen, GraduationCap, Check, RotateCcw, Trash2, Clock, Flame, Target, X, LogOut, User, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
 type TimeEntry = {
@@ -491,12 +492,126 @@ function HabitCard({
   );
 }
 
+function AuthDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { signIn, signUp } = useAuth();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      if (isLogin) {
+        const { error } = await signIn(email, password);
+        if (error) {
+          toast.error(error.message || "Ошибка входа");
+        } else {
+          toast.success("Добро пожаловать!");
+          onOpenChange(false);
+          setEmail("");
+          setPassword("");
+        }
+      } else {
+        const { error } = await signUp(email, password);
+        if (error) {
+          toast.error(error.message || "Ошибка регистрации");
+        } else {
+          toast.success("Проверьте почту для подтверждения!");
+          setIsLogin(true);
+        }
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="bg-white/95 backdrop-blur-sm border-[#bd7880]/20 max-w-sm">
+        <DialogHeader className="text-center space-y-2">
+          <div className="flex justify-center gap-2">
+            <div className="w-10 h-10 bg-[#4d0011]/10 rounded-xl flex items-center justify-center">
+              <GraduationCap className="w-5 h-5 text-[#4d0011]" />
+            </div>
+            <div className="w-10 h-10 bg-[#102b1f]/10 rounded-xl flex items-center justify-center">
+              <BookOpen className="w-5 h-5 text-[#102b1f]" />
+            </div>
+          </div>
+          <DialogTitle className="text-xl font-bold text-[#4d0011]">
+            {isLogin ? "Вход" : "Регистрация"}
+          </DialogTitle>
+          <DialogDescription className="text-[#856D55]">
+            {isLogin ? "Войдите в свой аккаунт" : "Создайте новый аккаунт"}
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+          <div className="space-y-2">
+            <Label htmlFor="auth-email" className="text-[#4d0011]">Email</Label>
+            <Input
+              id="auth-email"
+              type="email"
+              placeholder="your@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              data-testid="input-auth-email"
+              className="border-[#bd7880]/30 focus:border-[#4d0011]"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="auth-password" className="text-[#4d0011]">Пароль</Label>
+            <Input
+              id="auth-password"
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+              data-testid="input-auth-password"
+              className="border-[#bd7880]/30 focus:border-[#4d0011]"
+            />
+          </div>
+          <Button
+            type="submit"
+            disabled={loading}
+            data-testid="button-auth-submit"
+            className="w-full bg-gradient-to-r from-[#4d0011] to-[#bd7880] hover:from-[#4d0011]/90 hover:to-[#bd7880]/90 text-white"
+          >
+            {loading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : isLogin ? (
+              "Войти"
+            ) : (
+              "Зарегистрироваться"
+            )}
+          </Button>
+        </form>
+        <div className="text-center mt-2">
+          <button
+            type="button"
+            onClick={() => setIsLogin(!isLogin)}
+            data-testid="button-toggle-auth-mode"
+            className="text-sm text-[#bd7880] hover:text-[#4d0011] transition-colors"
+          >
+            {isLogin ? "Нет аккаунта? Зарегистрируйтесь" : "Уже есть аккаунт? Войдите"}
+          </button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function Home() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, loading: authLoading } = useAuth();
   const [habits, setHabits] = useState<Habit[]>([]);
   const [newHabitName, setNewHabitName] = useState("");
   const [newHabitType, setNewHabitType] = useState<"course" | "book">("course");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
 
   const weekDays = getWeekDays();
   const monthDays = getMonthDays();
@@ -599,16 +714,34 @@ export default function Home() {
         >
           <div className="flex items-center justify-between mb-4">
             <div />
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={signOut}
-              data-testid="button-logout"
-              className="text-[#bd7880] hover:text-[#4d0011] hover:bg-[#bd7880]/10"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Выйти
-            </Button>
+            {authLoading ? (
+              <div className="w-20" />
+            ) : user ? (
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-[#856D55] hidden sm:inline">{user.email}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={signOut}
+                  data-testid="button-logout"
+                  className="text-[#bd7880] hover:text-[#4d0011] hover:bg-[#bd7880]/10"
+                >
+                  <LogOut className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Выйти</span>
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsAuthDialogOpen(true)}
+                data-testid="button-login"
+                className="text-[#bd7880] hover:text-[#4d0011] hover:bg-[#bd7880]/10"
+              >
+                <User className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Войти</span>
+              </Button>
+            )}
           </div>
           <div className="text-center">
             <h1 className="text-4xl font-bold mb-2" data-testid="app-title">
@@ -617,13 +750,10 @@ export default function Home() {
             <p style={{ color: COLORS.rose }}>
               Отслеживайте прогресс. Достигайте целей.
             </p>
-            {user && (
-              <p className="text-sm mt-2" style={{ color: COLORS.rose }}>
-                {user.email}
-              </p>
-            )}
           </div>
         </motion.header>
+
+        <AuthDialog open={isAuthDialogOpen} onOpenChange={setIsAuthDialogOpen} />
 
         <motion.section 
           className="mb-12"
