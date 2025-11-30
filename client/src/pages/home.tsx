@@ -26,14 +26,6 @@ type Habit = {
 
 const STORAGE_KEY = "learning-tracker-habits";
 
-const COLORS = {
-  frost: "#F0EFEE",
-  stone: "#B7B7B6",
-  olive: "#9B907F",
-  acorn: "#726352",
-  leaf: "#4F5141",
-};
-
 function getWeekDays(): string[] {
   const today = new Date();
   const days: string[] = [];
@@ -79,25 +71,18 @@ function ReadingGoalsCircle({
 }) {
   const percentage = Math.min((todayMinutes / goalMinutes) * 100, 100);
   const radius = 80;
-  const strokeWidth = 12;
+  const strokeWidth = 8;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
   return (
     <div className="relative flex items-center justify-center">
-      <div className="absolute inset-0 rounded-full bg-[#9B907F]/10 blur-2xl" />
-      <svg className="w-52 h-52 transform -rotate-90" viewBox="0 0 200 200">
-        <defs>
-          <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor={COLORS.leaf} />
-            <stop offset="100%" stopColor={COLORS.olive} />
-          </linearGradient>
-        </defs>
+      <svg className="w-48 h-48 transform -rotate-90" viewBox="0 0 200 200">
         <circle
           cx="100"
           cy="100"
           r={radius}
-          stroke="rgba(155, 144, 127, 0.3)"
+          stroke="rgba(0,0,0,0.1)"
           strokeWidth={strokeWidth}
           fill="none"
         />
@@ -105,7 +90,7 @@ function ReadingGoalsCircle({
           cx="100"
           cy="100"
           r={radius}
-          stroke="url(#progressGradient)"
+          stroke="#1a1a1a"
           strokeWidth={strokeWidth}
           fill="none"
           strokeLinecap="round"
@@ -116,20 +101,19 @@ function ReadingGoalsCircle({
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-xs uppercase tracking-widest mb-1" style={{ color: COLORS.olive }}>
+        <span className="text-xs text-gray-400 uppercase tracking-widest mb-1">
           Сегодня
         </span>
         <motion.span 
-          className="text-5xl font-bold"
-          style={{ color: COLORS.leaf }}
+          className="text-5xl font-light text-black"
           initial={{ opacity: 0, scale: 0.5 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.3, type: "spring" }}
         >
           {todayMinutes}
         </motion.span>
-        <span className="text-sm mt-1" style={{ color: COLORS.olive }}>
-          из {goalMinutes} мин цели
+        <span className="text-sm text-gray-500 mt-1">
+          из {goalMinutes} мин
         </span>
       </div>
     </div>
@@ -154,27 +138,27 @@ function MonthCalendar({ habits, monthDays }: { habits: Habit[]; monthDays: stri
   const dayLabels = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-end gap-4 mb-2 text-[10px]">
-        <div className="flex items-center gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS.leaf }} />
-          <span style={{ color: COLORS.acorn }}>Курсы</span>
+    <div className="space-y-3">
+      <div className="flex items-center justify-end gap-6 mb-3 text-xs">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-black" />
+          <span className="text-gray-600">Курсы</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS.acorn }} />
-          <span style={{ color: COLORS.acorn }}>Книги</span>
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-[#e8c4c4]" />
+          <span className="text-gray-600">Книги</span>
         </div>
       </div>
-      <div className="grid grid-cols-7 gap-0.5 text-center">
+      <div className="grid grid-cols-7 gap-1 text-center">
         {dayLabels.map(label => (
-          <span key={label} className="text-[9px] uppercase py-1 font-medium" style={{ color: COLORS.olive }}>
+          <span key={label} className="text-[10px] text-gray-400 uppercase py-1 font-medium tracking-wider">
             {label}
           </span>
         ))}
       </div>
       <div className="grid grid-cols-7 gap-1">
         {Array.from({ length: startPadding }).map((_, i) => (
-          <div key={`pad-${i}`} className="h-7" />
+          <div key={`pad-${i}`} className="h-8" />
         ))}
         {monthDays.map(day => {
           const { courseCompleted, bookCompleted } = getDayProgress(day);
@@ -189,28 +173,22 @@ function MonthCalendar({ habits, monthDays }: { habits: Habit[]; monthDays: stri
               animate={{ scale: 1 }}
               transition={{ delay: Math.random() * 0.2 }}
               className={`
-                h-7 rounded-md flex flex-col items-center justify-center relative
-                ${hasAny ? "bg-[#B7B7B6]/30" : "bg-white/50"}
-                ${isToday ? "ring-2 ring-[#4F5141]/30" : ""}
-                ${isFuture ? "opacity-40" : ""}
-                transition-all duration-200 shadow-sm
+                h-8 rounded flex flex-col items-center justify-center relative
+                ${hasAny ? "bg-gray-100" : "bg-white"}
+                ${isToday ? "ring-1 ring-black" : ""}
+                ${isFuture ? "opacity-30" : ""}
+                transition-all duration-200
               `}
             >
-              <span className="text-[9px] mb-0.5 font-medium" style={{ color: COLORS.acorn }}>
+              <span className="text-[10px] text-gray-600 mb-0.5 font-medium">
                 {new Date(day).getDate()}
               </span>
               <div className="flex gap-0.5">
                 <div 
-                  className="w-1.5 h-1.5 rounded-full transition-all"
-                  style={{ 
-                    backgroundColor: courseCompleted ? COLORS.leaf : "rgba(79, 81, 65, 0.2)"
-                  }} 
+                  className={`w-1.5 h-1.5 rounded-full transition-all ${courseCompleted ? "bg-black" : "bg-gray-200"}`}
                 />
                 <div 
-                  className="w-1.5 h-1.5 rounded-full transition-all"
-                  style={{ 
-                    backgroundColor: bookCompleted ? COLORS.acorn : "rgba(114, 99, 82, 0.2)"
-                  }} 
+                  className={`w-1.5 h-1.5 rounded-full transition-all ${bookCompleted ? "bg-[#e8c4c4]" : "bg-gray-200"}`}
                 />
               </div>
             </motion.div>
@@ -239,13 +217,11 @@ function StreakCounter({ habits }: { habits: Habit[] }) {
   }
 
   return (
-    <div className="flex items-center gap-3 px-4 py-3 rounded-2xl glass-card shadow-md">
-      <div className="p-2 rounded-xl" style={{ backgroundColor: COLORS.olive }}>
-        <Flame className="w-5 h-5 text-white" />
-      </div>
+    <div className="flex items-center gap-4 px-6 py-4 bg-black text-white rounded-lg">
+      <Flame className="w-6 h-6" />
       <div>
-        <p className="text-2xl font-bold" style={{ color: COLORS.leaf }}>{streak}</p>
-        <p className="text-xs" style={{ color: COLORS.olive }}>Дней подряд</p>
+        <p className="text-3xl font-light">{streak}</p>
+        <p className="text-xs text-gray-400 uppercase tracking-wider">дней подряд</p>
       </div>
     </div>
   );
@@ -271,7 +247,7 @@ function DayButton({
   const isCompleted = entry?.completed;
   
   const isBook = habitType === "book";
-  const accentColor = isBook ? COLORS.acorn : COLORS.leaf;
+  const accentColor = isBook ? "#e8c4c4" : "#1a1a1a";
 
   const handleSave = () => {
     const minutes = timeInput ? parseInt(timeInput, 10) : undefined;
@@ -304,22 +280,21 @@ function DayButton({
           onClick={handleQuickToggle}
           disabled={isFuture}
           className={`
-            relative flex flex-col items-center p-2 rounded-xl transition-all duration-300 shadow-sm
+            relative flex flex-col items-center p-2.5 rounded-lg transition-all duration-300
             ${isCompleted 
-              ? "text-white shadow-md" 
+              ? "text-white shadow-sm" 
               : isToday 
-                ? "bg-[#B7B7B6]/30 ring-2" 
-                : "bg-white/70 hover:bg-[#B7B7B6]/20"
+                ? "bg-gray-100 ring-1 ring-black" 
+                : "bg-gray-50 text-gray-600 hover:bg-gray-100"
             }
-            ${isFuture ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:scale-105"}
+            ${isFuture ? "opacity-30 cursor-not-allowed" : "cursor-pointer hover:scale-105"}
           `}
           style={{
             backgroundColor: isCompleted ? accentColor : undefined,
-            color: isToday && !isCompleted ? accentColor : undefined,
-            ...(isToday && !isCompleted ? { '--tw-ring-color': `${accentColor}40` } as React.CSSProperties : {}),
+            color: isCompleted && !isBook ? "white" : isCompleted && isBook ? "#1a1a1a" : undefined,
           }}
         >
-          <span className="text-[10px] font-medium uppercase opacity-70">
+          <span className="text-[10px] font-medium uppercase opacity-60">
             {dayName}
           </span>
           <span className="text-sm font-semibold mt-0.5">
@@ -331,27 +306,27 @@ function DayButton({
               animate={{ scale: 1, rotate: 0 }}
               className="absolute -top-1 -right-1"
             >
-              <Check className="w-4 h-4 rounded-full p-0.5" style={{ backgroundColor: COLORS.olive, color: "white" }} />
+              <Check className="w-4 h-4 p-0.5 rounded-full bg-white text-black" />
             </motion.div>
           )}
           {entry?.minutes && (
-            <span className="text-[9px] mt-0.5 opacity-80">
+            <span className="text-[9px] mt-0.5 opacity-70">
               {entry.minutes}м
             </span>
           )}
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-56 p-4 glass-card border-[#B7B7B6]/30">
+      <PopoverContent className="w-56 p-4 bg-white border border-gray-200">
         <div className="space-y-4">
-          <p className="text-sm font-medium" style={{ color: COLORS.leaf }}>Отметить выполнение</p>
+          <p className="text-sm font-medium text-black">Отметить выполнение</p>
           <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4" style={{ color: COLORS.olive }} />
+            <Clock className="w-4 h-4 text-gray-400" />
             <Input
               type="number"
               placeholder="Минуты (необяз.)"
               value={timeInput}
               onChange={(e) => setTimeInput(e.target.value)}
-              className="h-9 bg-white/50 border-[#B7B7B6]/30"
+              className="h-9 bg-gray-50 border-gray-200"
               data-testid="input-time"
             />
           </div>
@@ -359,14 +334,13 @@ function DayButton({
             <Button 
               size="sm" 
               onClick={handleSave} 
-              className="flex-1 text-white"
-              style={{ backgroundColor: COLORS.leaf }}
+              className="flex-1 bg-black text-white hover:bg-gray-800"
               data-testid="button-save-day"
             >
               Сохранить
             </Button>
             {isCompleted && (
-              <Button size="sm" variant="outline" onClick={handleRemove} className="border-[#B7B7B6]/30" data-testid="button-remove-day">
+              <Button size="sm" variant="outline" onClick={handleRemove} className="border-gray-200" data-testid="button-remove-day">
                 <X className="w-4 h-4" />
               </Button>
             )}
@@ -397,8 +371,7 @@ function HabitCard({
   
   const isBook = habit.type === "book";
   const Icon = isBook ? BookOpen : GraduationCap;
-  const accentColor = isBook ? COLORS.acorn : COLORS.leaf;
-  const cardClass = isBook ? "acorn-card" : "leaf-card";
+  const accentColor = isBook ? "#e8c4c4" : "#1a1a1a";
 
   return (
     <motion.div
@@ -408,29 +381,26 @@ function HabitCard({
       exit={{ opacity: 0, x: -100 }}
       transition={{ duration: 0.4 }}
     >
-      <Card className={`${cardClass} border-0 overflow-hidden group shadow-md`}>
-        <CardContent className="relative p-5">
-          <div className="flex items-start justify-between mb-5">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl shadow-md" style={{ backgroundColor: accentColor }}>
-                <Icon className="w-5 h-5 text-white" />
+      <Card className="border border-gray-200 bg-white overflow-hidden group">
+        <CardContent className="relative p-6">
+          <div className="flex items-start justify-between mb-6">
+            <div className="flex items-center gap-4">
+              <div 
+                className="p-3 rounded-lg"
+                style={{ backgroundColor: accentColor }}
+              >
+                <Icon className={`w-5 h-5 ${isBook ? "text-black" : "text-white"}`} />
               </div>
               <div>
-                <h3 className="font-semibold text-lg" style={{ color: accentColor }} data-testid={`habit-name-${habit.id}`}>
+                <h3 className="font-medium text-lg text-black" data-testid={`habit-name-${habit.id}`}>
                   {habit.name}
                 </h3>
                 <div className="flex items-center gap-3 mt-1">
-                  <span 
-                    className="text-xs px-2 py-0.5 rounded-full"
-                    style={{ 
-                      backgroundColor: `${accentColor}15`,
-                      color: accentColor
-                    }}
-                  >
+                  <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600">
                     {habit.type === "course" ? "Курс" : "Книга"}
                   </span>
                   {totalMinutes > 0 && (
-                    <span className="text-xs flex items-center gap-1" style={{ color: COLORS.olive }}>
+                    <span className="text-xs text-gray-400 flex items-center gap-1">
                       <Clock className="w-3 h-3" />
                       {formatTime(totalMinutes)}
                     </span>
@@ -442,8 +412,7 @@ function HabitCard({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 hover:bg-white/50"
-                style={{ color: COLORS.olive }}
+                className="h-8 w-8 text-gray-400 hover:text-black hover:bg-gray-100"
                 onClick={() => onReset(habit.id)}
                 data-testid={`button-reset-${habit.id}`}
               >
@@ -452,8 +421,7 @@ function HabitCard({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 hover:bg-white/50"
-                style={{ color: COLORS.acorn }}
+                className="h-8 w-8 text-gray-400 hover:text-red-500 hover:bg-gray-100"
                 onClick={() => onDelete(habit.id)}
                 data-testid={`button-delete-${habit.id}`}
               >
@@ -462,8 +430,8 @@ function HabitCard({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 mb-4">
-            <div className="flex-1 h-2 bg-white/50 rounded-full overflow-hidden">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="flex-1 h-1 bg-gray-100 rounded-full overflow-hidden">
               <motion.div 
                 className="h-full rounded-full"
                 style={{ backgroundColor: accentColor }}
@@ -472,7 +440,7 @@ function HabitCard({
                 transition={{ duration: 0.8, ease: "easeOut" }}
               />
             </div>
-            <span className="text-sm font-medium" style={{ color: accentColor }}>{completedThisWeek}/7</span>
+            <span className="text-sm font-medium text-gray-600">{completedThisWeek}/7</span>
           </div>
 
           <div className="grid grid-cols-7 gap-2">
@@ -532,26 +500,26 @@ function AuthDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white/95 backdrop-blur-sm border-[#B7B7B6]/30 max-w-sm">
-        <DialogHeader className="text-center space-y-2">
-          <div className="flex justify-center gap-2">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${COLORS.leaf}15` }}>
-              <GraduationCap className="w-5 h-5" style={{ color: COLORS.leaf }} />
+      <DialogContent className="bg-white border border-gray-200 max-w-sm">
+        <DialogHeader className="text-center space-y-3">
+          <div className="flex justify-center gap-3">
+            <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center">
+              <GraduationCap className="w-5 h-5 text-white" />
             </div>
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${COLORS.acorn}15` }}>
-              <BookOpen className="w-5 h-5" style={{ color: COLORS.acorn }} />
+            <div className="w-10 h-10 bg-[#e8c4c4] rounded-lg flex items-center justify-center">
+              <BookOpen className="w-5 h-5 text-black" />
             </div>
           </div>
-          <DialogTitle className="text-xl font-bold" style={{ color: COLORS.leaf }}>
+          <DialogTitle className="text-xl font-medium text-black">
             {isLogin ? "Вход" : "Регистрация"}
           </DialogTitle>
-          <DialogDescription style={{ color: COLORS.olive }}>
+          <DialogDescription className="text-gray-500">
             {isLogin ? "Войдите в свой аккаунт" : "Создайте новый аккаунт"}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="space-y-2">
-            <Label htmlFor="auth-email" style={{ color: COLORS.leaf }}>Email</Label>
+            <Label htmlFor="auth-email" className="text-gray-700">Email</Label>
             <Input
               id="auth-email"
               type="email"
@@ -560,11 +528,11 @@ function AuthDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open
               onChange={(e) => setEmail(e.target.value)}
               required
               data-testid="input-auth-email"
-              className="border-[#B7B7B6]/50"
+              className="border-gray-200 focus:border-black"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="auth-password" style={{ color: COLORS.leaf }}>Пароль</Label>
+            <Label htmlFor="auth-password" className="text-gray-700">Пароль</Label>
             <Input
               id="auth-password"
               type="password"
@@ -574,15 +542,14 @@ function AuthDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open
               required
               minLength={6}
               data-testid="input-auth-password"
-              className="border-[#B7B7B6]/50"
+              className="border-gray-200 focus:border-black"
             />
           </div>
           <Button
             type="submit"
             disabled={loading}
             data-testid="button-auth-submit"
-            className="w-full text-white"
-            style={{ backgroundColor: COLORS.leaf }}
+            className="w-full bg-black text-white hover:bg-gray-800"
           >
             {loading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -598,8 +565,7 @@ function AuthDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open
             type="button"
             onClick={() => setIsLogin(!isLogin)}
             data-testid="button-toggle-auth-mode"
-            className="text-sm transition-colors"
-            style={{ color: COLORS.olive }}
+            className="text-sm text-gray-500 hover:text-black transition-colors"
           >
             {isLogin ? "Нет аккаунта? Зарегистрируйтесь" : "Уже есть аккаунт? Войдите"}
           </button>
@@ -706,30 +672,22 @@ export default function Home() {
   const currentMonth = new Date().toLocaleDateString("ru-RU", { month: "long", year: "numeric" });
 
   return (
-    <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: COLORS.frost }}>
-      <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full blur-3xl" style={{ backgroundColor: `${COLORS.olive}10` }} />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 rounded-full blur-3xl" style={{ backgroundColor: `${COLORS.leaf}05` }} />
-      
-      <div className="relative max-w-4xl mx-auto px-4 py-8">
-        <motion.header 
-          className="mb-12"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <div className="flex items-center justify-between mb-4">
+    <div className="min-h-screen bg-white">
+      <header className="bg-black text-white py-12 px-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center justify-between mb-8">
             <div />
             {authLoading ? (
               <div className="w-20" />
             ) : user ? (
               <div className="flex items-center gap-3">
-                <span className="text-sm hidden sm:inline" style={{ color: COLORS.olive }}>{user.email}</span>
+                <span className="text-sm text-gray-400 hidden sm:inline">{user.email}</span>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={signOut}
                   data-testid="button-logout"
-                  className="hover:bg-[#B7B7B6]/20"
-                  style={{ color: COLORS.olive }}
+                  className="text-gray-400 hover:text-white hover:bg-white/10"
                 >
                   <LogOut className="w-4 h-4 sm:mr-2" />
                   <span className="hidden sm:inline">Выйти</span>
@@ -741,47 +699,50 @@ export default function Home() {
                 size="sm"
                 onClick={() => setIsAuthDialogOpen(true)}
                 data-testid="button-login"
-                className="hover:bg-[#B7B7B6]/20"
-                style={{ color: COLORS.olive }}
+                className="text-gray-400 hover:text-white hover:bg-white/10"
               >
                 <User className="w-4 h-4 sm:mr-2" />
                 <span className="hidden sm:inline">Войти</span>
               </Button>
             )}
           </div>
-          <div className="text-center">
-            <h1 className="text-4xl font-bold mb-2" data-testid="app-title" style={{ color: COLORS.leaf }}>
-              Учебный трекер
+          
+          <motion.div 
+            className="text-center"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <h1 className="text-5xl md:text-6xl font-light mb-3 tracking-tight" data-testid="app-title">
+              Учебный
+              <span className="font-serif italic text-[#e8c4c4] ml-3">трекер</span>
             </h1>
-            <p style={{ color: COLORS.olive }}>
+            <p className="text-gray-400 text-lg font-light">
               Отслеживайте прогресс. Достигайте целей.
             </p>
-          </div>
-        </motion.header>
+          </motion.div>
+        </div>
+      </header>
 
-        <AuthDialog open={isAuthDialogOpen} onOpenChange={setIsAuthDialogOpen} />
+      <AuthDialog open={isAuthDialogOpen} onOpenChange={setIsAuthDialogOpen} />
 
+      <div className="max-w-4xl mx-auto px-4 py-12">
         <motion.section 
-          className="mb-12"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
+          className="mb-16"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <div className="flex flex-col lg:flex-row items-center gap-8 justify-center">
+          <div className="flex flex-col lg:flex-row items-center gap-12 justify-center">
             <ReadingGoalsCircle todayMinutes={todayMinutes} goalMinutes={60} />
             
             <div className="flex flex-col gap-4">
               <StreakCounter habits={habits} />
               
-              <div className="px-4 py-3 rounded-2xl glass-card shadow-md">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl" style={{ backgroundColor: COLORS.leaf }}>
-                    <Target className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold" style={{ color: COLORS.leaf }}>{habits.length}</p>
-                    <p className="text-xs" style={{ color: COLORS.olive }}>Активных целей</p>
-                  </div>
+              <div className="flex items-center gap-4 px-6 py-4 bg-gray-50 rounded-lg">
+                <Target className="w-6 h-6 text-gray-400" />
+                <div>
+                  <p className="text-3xl font-light text-black">{habits.length}</p>
+                  <p className="text-xs text-gray-400 uppercase tracking-wider">активных целей</p>
                 </div>
               </div>
             </div>
@@ -789,37 +750,36 @@ export default function Home() {
         </motion.section>
 
         <motion.section 
-          className="mb-12"
+          className="mb-16"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <div className="glass-card rounded-2xl p-5 shadow-md">
-            <h3 className="text-lg font-semibold mb-4 capitalize" style={{ color: COLORS.leaf }}>{currentMonth}</h3>
+          <div className="bg-gray-50 rounded-xl p-6">
+            <h3 className="text-lg font-medium mb-5 capitalize text-black">{currentMonth}</h3>
             <MonthCalendar habits={habits} monthDays={monthDays} />
           </div>
         </motion.section>
 
         <section>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold" style={{ color: COLORS.leaf }}>
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl font-light text-black">
               Мои курсы и книги
             </h2>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button 
                   data-testid="button-add-habit" 
-                  className="gap-2 text-white shadow-lg"
-                  style={{ backgroundColor: COLORS.leaf }}
+                  className="gap-2 bg-black text-white hover:bg-gray-800"
                 >
                   <Plus className="w-4 h-4" />
                   Добавить
                 </Button>
               </DialogTrigger>
-              <DialogContent className="glass-card border-[#B7B7B6]/30">
+              <DialogContent className="bg-white border border-gray-200">
                 <DialogHeader>
-                  <DialogTitle style={{ color: COLORS.leaf }}>Новая учебная привычка</DialogTitle>
-                  <DialogDescription style={{ color: COLORS.olive }}>
+                  <DialogTitle className="text-black">Новая учебная привычка</DialogTitle>
+                  <DialogDescription className="text-gray-500">
                     Добавьте курс или книгу для отслеживания
                   </DialogDescription>
                 </DialogHeader>
@@ -830,7 +790,7 @@ export default function Home() {
                       value={newHabitName}
                       onChange={(e) => setNewHabitName(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && addHabit()}
-                      className="bg-white/50 border-[#B7B7B6]/30"
+                      className="bg-gray-50 border-gray-200"
                       data-testid="input-habit-name"
                     />
                   </div>
@@ -838,11 +798,7 @@ export default function Home() {
                     <Button
                       variant={newHabitType === "course" ? "default" : "outline"}
                       onClick={() => setNewHabitType("course")}
-                      className={`flex-1 ${newHabitType === "course" ? "text-white" : ""}`}
-                      style={{ 
-                        backgroundColor: newHabitType === "course" ? COLORS.leaf : undefined,
-                        borderColor: COLORS.stone
-                      }}
+                      className={`flex-1 ${newHabitType === "course" ? "bg-black text-white hover:bg-gray-800" : "border-gray-200 text-gray-700"}`}
                       data-testid="button-type-course"
                     >
                       <GraduationCap className="w-4 h-4 mr-2" />
@@ -851,11 +807,7 @@ export default function Home() {
                     <Button
                       variant={newHabitType === "book" ? "default" : "outline"}
                       onClick={() => setNewHabitType("book")}
-                      className={`flex-1 ${newHabitType === "book" ? "text-white" : ""}`}
-                      style={{ 
-                        backgroundColor: newHabitType === "book" ? COLORS.acorn : undefined,
-                        borderColor: COLORS.stone
-                      }}
+                      className={`flex-1 ${newHabitType === "book" ? "bg-[#e8c4c4] text-black hover:bg-[#dbb5b5]" : "border-gray-200 text-gray-700"}`}
                       data-testid="button-type-book"
                     >
                       <BookOpen className="w-4 h-4 mr-2" />
@@ -864,8 +816,7 @@ export default function Home() {
                   </div>
                   <Button 
                     onClick={addHabit} 
-                    className="w-full text-white" 
-                    style={{ backgroundColor: COLORS.leaf }}
+                    className="w-full bg-black text-white hover:bg-gray-800" 
                     data-testid="button-confirm-add"
                   >
                     Добавить
@@ -880,21 +831,17 @@ export default function Home() {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="text-center py-16"
+                className="text-center py-20"
               >
-                <div 
-                  className="w-20 h-20 mx-auto mb-6 rounded-2xl flex items-center justify-center"
-                  style={{ backgroundColor: `${COLORS.stone}30` }}
-                >
-                  <BookOpen className="w-10 h-10" style={{ color: COLORS.leaf }} />
+                <div className="w-20 h-20 mx-auto mb-6 rounded-xl bg-gray-100 flex items-center justify-center">
+                  <BookOpen className="w-10 h-10 text-gray-400" />
                 </div>
-                <p className="mb-6" style={{ color: COLORS.olive }}>
+                <p className="mb-6 text-gray-500">
                   Начните отслеживать свои учебные привычки
                 </p>
                 <Button
                   onClick={() => setIsDialogOpen(true)}
-                  className="text-white"
-                  style={{ backgroundColor: COLORS.leaf }}
+                  className="bg-black text-white hover:bg-gray-800"
                   data-testid="button-add-first"
                 >
                   <Plus className="w-4 h-4 mr-2" />
