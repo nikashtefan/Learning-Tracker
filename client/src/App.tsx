@@ -1,4 +1,4 @@
-import { Switch, Route, Redirect, useLocation } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -9,10 +9,17 @@ import Home from "@/pages/home";
 import AuthPage from "@/pages/auth";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
+import { useEffect } from "react";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { user, loading } = useAuth();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      setLocation("/auth");
+    }
+  }, [loading, user, setLocation]);
 
   if (loading) {
     return (
@@ -23,8 +30,11 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
   }
 
   if (!user) {
-    setLocation("/auth");
-    return null;
+    return (
+      <div className="min-h-screen bg-[#EDEBDD] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-[#4d0011]" />
+      </div>
+    );
   }
 
   return <Component />;
@@ -32,7 +42,13 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
 
 function PublicRoute({ component: Component }: { component: React.ComponentType }) {
   const { user, loading } = useAuth();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (!loading && user) {
+      setLocation("/");
+    }
+  }, [loading, user, setLocation]);
 
   if (loading) {
     return (
@@ -43,8 +59,11 @@ function PublicRoute({ component: Component }: { component: React.ComponentType 
   }
 
   if (user) {
-    setLocation("/");
-    return null;
+    return (
+      <div className="min-h-screen bg-[#EDEBDD] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-[#4d0011]" />
+      </div>
+    );
   }
 
   return <Component />;
