@@ -15,6 +15,10 @@ run = ["npm", "run", "start"]
 localPort = 5000
 externalPort = 80
 
+[[ports]]
+localPort = 43029
+externalPort = 3000
+
 [env]
 PORT = "5000"
 
@@ -41,3 +45,9 @@ waitForPort = 5000
 
 [agent]
 mockupState = "FULLSTACK"
+
+[userenv]
+
+[userenv.shared]
+VITE_SUPABASE_URL = "https://yqinjernmzdietduxpew.supabase.co"
+VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlxaW5qZXJubXpkaWV0ZHV4cGV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0MjI0MjYsImV4cCI6MjA3OTk5ODQyNn0.qlM92KqV9O6zeij0scSAui0UYKca1V25yGpx2cYX1w0"
