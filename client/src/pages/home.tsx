@@ -309,24 +309,27 @@ function DayButton({
 
   const handleClick = () => {
     if (isFuture) return;
-    if (isCompleted) {
-      setTimeInput(entry?.minutes?.toString() || "");
-      setIsOpen(true);
-    } else {
+    if (!isCompleted) {
       onUpdate(day, { completed: true });
     }
+  };
+
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setTimeInput(entry?.minutes?.toString() || "");
+    setIsOpen(true);
   };
 
   const dayName = new Date(day).toLocaleDateString("ru-RU", { weekday: "short" });
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <PopoverTrigger asChild>
+      <div className="relative">
         <button
           onClick={handleClick}
           disabled={isFuture}
           className={`
-            relative flex flex-col items-center p-2.5 rounded-lg transition-all duration-300
+            relative flex flex-col items-center p-2.5 rounded-lg transition-all duration-300 w-full
             ${isCompleted 
               ? "shadow-sm" 
               : isToday 
@@ -361,7 +364,17 @@ function DayButton({
             </span>
           )}
         </button>
-      </PopoverTrigger>
+        {isCompleted && (
+          <PopoverTrigger asChild>
+            <button
+              onClick={handleEditClick}
+              className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-100 transition-colors shadow-sm"
+            >
+              <Pencil className="w-2.5 h-2.5 text-gray-600" />
+            </button>
+          </PopoverTrigger>
+        )}
+      </div>
       <PopoverContent className="w-56 p-4 bg-white border border-gray-200">
         <div className="space-y-4">
           <p className="text-sm font-medium text-black">Редактировать</p>
