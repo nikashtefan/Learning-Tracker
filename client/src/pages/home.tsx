@@ -290,16 +290,15 @@ function DayButton({
   onUpdate: (day: string, entry: TimeEntry | null) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [timeInput, setTimeInput] = useState("");
+  const [timeInput, setTimeInput] = useState(entry?.minutes?.toString() || "");
   const isCompleted = entry?.completed;
   
   const accentColor = habitType === "book" ? COLORS.book : COLORS.course;
 
-  const handleSave = () => {
+  const handleSaveMinutes = () => {
     const minutes = timeInput ? parseInt(timeInput, 10) : undefined;
     onUpdate(day, { completed: true, minutes: minutes && !isNaN(minutes) ? minutes : undefined });
     setIsOpen(false);
-    setTimeInput("");
   };
 
   const handleRemove = () => {
@@ -308,12 +307,13 @@ function DayButton({
     setTimeInput("");
   };
 
-  const handleQuickToggle = () => {
+  const handleClick = () => {
     if (isFuture) return;
     if (isCompleted) {
-      onUpdate(day, null);
-    } else {
+      setTimeInput(entry?.minutes?.toString() || "");
       setIsOpen(true);
+    } else {
+      onUpdate(day, { completed: true });
     }
   };
 
@@ -323,7 +323,7 @@ function DayButton({
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <button
-          onClick={handleQuickToggle}
+          onClick={handleClick}
           disabled={isFuture}
           className={`
             relative flex flex-col items-center p-2.5 rounded-lg transition-all duration-300
@@ -364,12 +364,12 @@ function DayButton({
       </PopoverTrigger>
       <PopoverContent className="w-56 p-4 bg-white border border-gray-200">
         <div className="space-y-4">
-          <p className="text-sm font-medium text-black">Отметить выполнение</p>
+          <p className="text-sm font-medium text-black">Редактировать</p>
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-gray-400" />
             <Input
               type="number"
-              placeholder="Минуты (необяз.)"
+              placeholder="Минуты"
               value={timeInput}
               onChange={(e) => setTimeInput(e.target.value)}
               className="h-9 bg-gray-50 border-gray-200"
@@ -379,17 +379,15 @@ function DayButton({
           <div className="flex gap-2">
             <Button 
               size="sm" 
-              onClick={handleSave} 
+              onClick={handleSaveMinutes} 
               className="flex-1 bg-black text-white hover:bg-gray-800"
               data-testid="button-save-day"
             >
               Сохранить
             </Button>
-            {isCompleted && (
-              <Button size="sm" variant="outline" onClick={handleRemove} className="border-gray-200" data-testid="button-remove-day">
-                <X className="w-4 h-4" />
-              </Button>
-            )}
+            <Button size="sm" variant="outline" onClick={handleRemove} className="border-gray-200" data-testid="button-remove-day">
+              <X className="w-4 h-4" />
+            </Button>
           </div>
         </div>
       </PopoverContent>
