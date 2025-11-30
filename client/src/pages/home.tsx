@@ -830,13 +830,12 @@ export default function Home() {
                 <span className="text-sm text-gray-400 hidden sm:inline">{user.email}</span>
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="icon"
                   onClick={signOut}
                   data-testid="button-logout"
                   className="text-gray-400 hover:text-white hover:bg-white/10"
                 >
-                  <LogOut className="w-4 h-4 sm:mr-2" />
-                  <span className="hidden sm:inline">Выйти</span>
+                  <LogOut className="w-4 h-4" />
                 </Button>
               </div>
             ) : (
