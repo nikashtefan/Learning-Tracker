@@ -17,7 +17,14 @@ The app allows users to:
 - Smooth Framer Motion animations
 - Responsive layout for mobile and desktop
 
-All data is stored in browser localStorage for persistence without requiring a database.
+User data is stored in browser localStorage for persistence. Authentication is handled via Supabase Auth.
+
+## Authentication
+- Supabase Auth for user registration and login
+- Protected routes require authentication
+- Auth page at `/auth` for login/registration
+- Session management via Supabase onAuthStateChange listener
+- Logout functionality available in the header
 
 # User Preferences
 
