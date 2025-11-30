@@ -581,18 +581,18 @@ function HabitCard({
 }
 
 function AuthDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
-  const [isLogin, setIsLogin] = useState(true);
+  const [mode, setMode] = useState<"login" | "register" | "reset">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, resetPassword } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      if (isLogin) {
+      if (mode === "login") {
         const { error } = await signIn(email, password);
         if (error) {
           toast.error(error.message || "Ошибка входа");
@@ -602,17 +602,49 @@ function AuthDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open
           setEmail("");
           setPassword("");
         }
-      } else {
+      } else if (mode === "register") {
         const { error } = await signUp(email, password);
         if (error) {
           toast.error(error.message || "Ошибка регистрации");
         } else {
           toast.success("Проверьте почту для подтверждения!");
-          setIsLogin(true);
+          setMode("login");
+        }
+      } else if (mode === "reset") {
+        const { error } = await resetPassword(email);
+        if (error) {
+          toast.error(error.message || "Ошибка отправки");
+        } else {
+          toast.success("Письмо для сброса пароля отправлено!");
+          setMode("login");
         }
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const getTitle = () => {
+    switch (mode) {
+      case "login": return "Вход";
+      case "register": return "Регистрация";
+      case "reset": return "Сброс пароля";
+    }
+  };
+
+  const getDescription = () => {
+    switch (mode) {
+      case "login": return "Войдите в свой аккаунт";
+      case "register": return "Создайте новый аккаунт";
+      case "reset": return "Введите email для восстановления";
+    }
+  };
+
+  const getButtonText = () => {
+    switch (mode) {
+      case "login": return "Войти";
+      case "register": return "Зарегистрироваться";
+      case "reset": return "Отправить";
     }
   };
 
@@ -629,10 +661,10 @@ function AuthDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open
             </div>
           </div>
           <DialogTitle className="text-xl font-medium text-black">
-            {isLogin ? "Вход" : "Регистрация"}
+            {getTitle()}
           </DialogTitle>
           <DialogDescription className="text-gray-500">
-            {isLogin ? "Войдите в свой аккаунт" : "Создайте новый аккаунт"}
+            {getDescription()}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
@@ -649,20 +681,32 @@ function AuthDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open
               className="border-gray-200 focus:border-black"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="auth-password" className="text-gray-700">Пароль</Label>
-            <Input
-              id="auth-password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              data-testid="input-auth-password"
-              className="border-gray-200 focus:border-black"
-            />
-          </div>
+          {mode !== "reset" && (
+            <div className="space-y-2">
+              <Label htmlFor="auth-password" className="text-gray-700">Пароль</Label>
+              <Input
+                id="auth-password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+                data-testid="input-auth-password"
+                className="border-gray-200 focus:border-black"
+              />
+            </div>
+          )}
+          {mode === "login" && (
+            <button
+              type="button"
+              onClick={() => setMode("reset")}
+              className="text-xs text-gray-400 hover:text-black transition-colors"
+              data-testid="button-forgot-password"
+            >
+              Забыли пароль?
+            </button>
+          )}
           <Button
             type="submit"
             disabled={loading}
@@ -671,22 +715,30 @@ function AuthDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open
           >
             {loading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
-            ) : isLogin ? (
-              "Войти"
             ) : (
-              "Зарегистрироваться"
+              getButtonText()
             )}
           </Button>
         </form>
-        <div className="text-center mt-2">
-          <button
-            type="button"
-            onClick={() => setIsLogin(!isLogin)}
-            data-testid="button-toggle-auth-mode"
-            className="text-sm text-gray-500 hover:text-black transition-colors"
-          >
-            {isLogin ? "Нет аккаунта? Зарегистрируйтесь" : "Уже есть аккаунт? Войдите"}
-          </button>
+        <div className="text-center mt-2 space-y-1">
+          {mode === "reset" ? (
+            <button
+              type="button"
+              onClick={() => setMode("login")}
+              className="text-sm text-gray-500 hover:text-black transition-colors"
+            >
+              Вернуться к входу
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setMode(mode === "login" ? "register" : "login")}
+              data-testid="button-toggle-auth-mode"
+              className="text-sm text-gray-500 hover:text-black transition-colors"
+            >
+              {mode === "login" ? "Нет аккаунта? Зарегистрируйтесь" : "Уже есть аккаунт? Войдите"}
+            </button>
+          )}
         </div>
       </DialogContent>
     </Dialog>
