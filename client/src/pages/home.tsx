@@ -27,10 +27,11 @@ type Habit = {
 const STORAGE_KEY = "learning-tracker-habits";
 
 const COLORS = {
-  wine: "#4d0011",
-  pine: "#102b1f",
-  rose: "#bd7880",
-  pink: "#ffd9d9",
+  frost: "#F0EFEE",
+  stone: "#B7B7B6",
+  olive: "#9B907F",
+  acorn: "#726352",
+  leaf: "#4F5141",
 };
 
 function getWeekDays(): string[] {
@@ -84,19 +85,19 @@ function ReadingGoalsCircle({
 
   return (
     <div className="relative flex items-center justify-center">
-      <div className="absolute inset-0 rounded-full bg-[#bd7880]/10 blur-2xl animate-pulse-glow" />
+      <div className="absolute inset-0 rounded-full bg-[#9B907F]/10 blur-2xl" />
       <svg className="w-52 h-52 transform -rotate-90" viewBox="0 0 200 200">
         <defs>
           <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor={COLORS.wine} />
-            <stop offset="100%" stopColor={COLORS.rose} />
+            <stop offset="0%" stopColor={COLORS.leaf} />
+            <stop offset="100%" stopColor={COLORS.olive} />
           </linearGradient>
         </defs>
         <circle
           cx="100"
           cy="100"
           r={radius}
-          stroke="rgba(189, 120, 128, 0.2)"
+          stroke="rgba(155, 144, 127, 0.3)"
           strokeWidth={strokeWidth}
           fill="none"
         />
@@ -115,18 +116,19 @@ function ReadingGoalsCircle({
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-xs text-[#bd7880] uppercase tracking-widest mb-1">
+        <span className="text-xs uppercase tracking-widest mb-1" style={{ color: COLORS.olive }}>
           Сегодня
         </span>
         <motion.span 
-          className="text-5xl font-bold gradient-text"
+          className="text-5xl font-bold"
+          style={{ color: COLORS.leaf }}
           initial={{ opacity: 0, scale: 0.5 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.3, type: "spring" }}
         >
           {todayMinutes}
         </motion.span>
-        <span className="text-sm text-[#bd7880] mt-1">
+        <span className="text-sm mt-1" style={{ color: COLORS.olive }}>
           из {goalMinutes} мин цели
         </span>
       </div>
@@ -155,17 +157,17 @@ function MonthCalendar({ habits, monthDays }: { habits: Habit[]; monthDays: stri
     <div className="space-y-2">
       <div className="flex items-center justify-end gap-4 mb-2 text-[10px]">
         <div className="flex items-center gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS.wine }} />
-          <span className="text-[#4d0011]/70">Курсы</span>
+          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS.leaf }} />
+          <span style={{ color: COLORS.acorn }}>Курсы</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS.pine }} />
-          <span className="text-[#102b1f]/70">Книги</span>
+          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS.acorn }} />
+          <span style={{ color: COLORS.acorn }}>Книги</span>
         </div>
       </div>
       <div className="grid grid-cols-7 gap-0.5 text-center">
         {dayLabels.map(label => (
-          <span key={label} className="text-[9px] text-[#bd7880] uppercase py-1 font-medium">
+          <span key={label} className="text-[9px] uppercase py-1 font-medium" style={{ color: COLORS.olive }}>
             {label}
           </span>
         ))}
@@ -188,26 +190,26 @@ function MonthCalendar({ habits, monthDays }: { habits: Habit[]; monthDays: stri
               transition={{ delay: Math.random() * 0.2 }}
               className={`
                 h-7 rounded-md flex flex-col items-center justify-center relative
-                ${hasAny ? "bg-[#ffd9d9]" : "bg-white/50"}
-                ${isToday ? "ring-2 ring-[#4d0011]/30" : ""}
+                ${hasAny ? "bg-[#B7B7B6]/30" : "bg-white/50"}
+                ${isToday ? "ring-2 ring-[#4F5141]/30" : ""}
                 ${isFuture ? "opacity-40" : ""}
                 transition-all duration-200 shadow-sm
               `}
             >
-              <span className="text-[9px] text-[#4d0011]/60 mb-0.5 font-medium">
+              <span className="text-[9px] mb-0.5 font-medium" style={{ color: COLORS.acorn }}>
                 {new Date(day).getDate()}
               </span>
               <div className="flex gap-0.5">
                 <div 
                   className="w-1.5 h-1.5 rounded-full transition-all"
                   style={{ 
-                    backgroundColor: courseCompleted ? COLORS.wine : "rgba(189, 120, 128, 0.3)"
+                    backgroundColor: courseCompleted ? COLORS.leaf : "rgba(79, 81, 65, 0.2)"
                   }} 
                 />
                 <div 
                   className="w-1.5 h-1.5 rounded-full transition-all"
                   style={{ 
-                    backgroundColor: bookCompleted ? COLORS.pine : "rgba(16, 43, 31, 0.2)"
+                    backgroundColor: bookCompleted ? COLORS.acorn : "rgba(114, 99, 82, 0.2)"
                   }} 
                 />
               </div>
@@ -238,12 +240,12 @@ function StreakCounter({ habits }: { habits: Habit[] }) {
 
   return (
     <div className="flex items-center gap-3 px-4 py-3 rounded-2xl glass-card shadow-md">
-      <div className="p-2 rounded-xl" style={{ backgroundColor: COLORS.wine }}>
+      <div className="p-2 rounded-xl" style={{ backgroundColor: COLORS.olive }}>
         <Flame className="w-5 h-5 text-white" />
       </div>
       <div>
-        <p className="text-2xl font-bold" style={{ color: COLORS.wine }}>{streak}</p>
-        <p className="text-xs text-[#bd7880]">Дней подряд</p>
+        <p className="text-2xl font-bold" style={{ color: COLORS.leaf }}>{streak}</p>
+        <p className="text-xs" style={{ color: COLORS.olive }}>Дней подряд</p>
       </div>
     </div>
   );
@@ -269,7 +271,7 @@ function DayButton({
   const isCompleted = entry?.completed;
   
   const isBook = habitType === "book";
-  const accentColor = isBook ? COLORS.pine : COLORS.wine;
+  const accentColor = isBook ? COLORS.acorn : COLORS.leaf;
 
   const handleSave = () => {
     const minutes = timeInput ? parseInt(timeInput, 10) : undefined;
@@ -306,8 +308,8 @@ function DayButton({
             ${isCompleted 
               ? "text-white shadow-md" 
               : isToday 
-                ? "bg-[#ffd9d9] ring-2" 
-                : "bg-white/70 text-[#4d0011]/60 hover:bg-[#ffd9d9]/50"
+                ? "bg-[#B7B7B6]/30 ring-2" 
+                : "bg-white/70 hover:bg-[#B7B7B6]/20"
             }
             ${isFuture ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:scale-105"}
           `}
@@ -329,7 +331,7 @@ function DayButton({
               animate={{ scale: 1, rotate: 0 }}
               className="absolute -top-1 -right-1"
             >
-              <Check className="w-4 h-4 rounded-full p-0.5" style={{ backgroundColor: COLORS.rose, color: "white" }} />
+              <Check className="w-4 h-4 rounded-full p-0.5" style={{ backgroundColor: COLORS.olive, color: "white" }} />
             </motion.div>
           )}
           {entry?.minutes && (
@@ -339,17 +341,17 @@ function DayButton({
           )}
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-56 p-4 glass-card border-[#bd7880]/30">
+      <PopoverContent className="w-56 p-4 glass-card border-[#B7B7B6]/30">
         <div className="space-y-4">
-          <p className="text-sm font-medium" style={{ color: COLORS.wine }}>Отметить выполнение</p>
+          <p className="text-sm font-medium" style={{ color: COLORS.leaf }}>Отметить выполнение</p>
           <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4" style={{ color: COLORS.rose }} />
+            <Clock className="w-4 h-4" style={{ color: COLORS.olive }} />
             <Input
               type="number"
               placeholder="Минуты (необяз.)"
               value={timeInput}
               onChange={(e) => setTimeInput(e.target.value)}
-              className="h-9 bg-white/50 border-[#bd7880]/30"
+              className="h-9 bg-white/50 border-[#B7B7B6]/30"
               data-testid="input-time"
             />
           </div>
@@ -358,13 +360,13 @@ function DayButton({
               size="sm" 
               onClick={handleSave} 
               className="flex-1 text-white"
-              style={{ backgroundColor: COLORS.wine }}
+              style={{ backgroundColor: COLORS.leaf }}
               data-testid="button-save-day"
             >
               Сохранить
             </Button>
             {isCompleted && (
-              <Button size="sm" variant="outline" onClick={handleRemove} className="border-[#bd7880]/30" data-testid="button-remove-day">
+              <Button size="sm" variant="outline" onClick={handleRemove} className="border-[#B7B7B6]/30" data-testid="button-remove-day">
                 <X className="w-4 h-4" />
               </Button>
             )}
@@ -395,8 +397,8 @@ function HabitCard({
   
   const isBook = habit.type === "book";
   const Icon = isBook ? BookOpen : GraduationCap;
-  const accentColor = isBook ? COLORS.pine : COLORS.wine;
-  const cardClass = isBook ? "pine-card" : "wine-card";
+  const accentColor = isBook ? COLORS.acorn : COLORS.leaf;
+  const cardClass = isBook ? "acorn-card" : "leaf-card";
 
   return (
     <motion.div
@@ -428,7 +430,7 @@ function HabitCard({
                     {habit.type === "course" ? "Курс" : "Книга"}
                   </span>
                   {totalMinutes > 0 && (
-                    <span className="text-xs flex items-center gap-1" style={{ color: COLORS.rose }}>
+                    <span className="text-xs flex items-center gap-1" style={{ color: COLORS.olive }}>
                       <Clock className="w-3 h-3" />
                       {formatTime(totalMinutes)}
                     </span>
@@ -441,7 +443,7 @@ function HabitCard({
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 hover:bg-white/50"
-                style={{ color: COLORS.rose }}
+                style={{ color: COLORS.olive }}
                 onClick={() => onReset(habit.id)}
                 data-testid={`button-reset-${habit.id}`}
               >
@@ -451,7 +453,7 @@ function HabitCard({
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 hover:bg-white/50"
-                style={{ color: COLORS.wine }}
+                style={{ color: COLORS.acorn }}
                 onClick={() => onDelete(habit.id)}
                 data-testid={`button-delete-${habit.id}`}
               >
@@ -530,26 +532,26 @@ function AuthDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white/95 backdrop-blur-sm border-[#bd7880]/20 max-w-sm">
+      <DialogContent className="bg-white/95 backdrop-blur-sm border-[#B7B7B6]/30 max-w-sm">
         <DialogHeader className="text-center space-y-2">
           <div className="flex justify-center gap-2">
-            <div className="w-10 h-10 bg-[#4d0011]/10 rounded-xl flex items-center justify-center">
-              <GraduationCap className="w-5 h-5 text-[#4d0011]" />
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${COLORS.leaf}15` }}>
+              <GraduationCap className="w-5 h-5" style={{ color: COLORS.leaf }} />
             </div>
-            <div className="w-10 h-10 bg-[#102b1f]/10 rounded-xl flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-[#102b1f]" />
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${COLORS.acorn}15` }}>
+              <BookOpen className="w-5 h-5" style={{ color: COLORS.acorn }} />
             </div>
           </div>
-          <DialogTitle className="text-xl font-bold text-[#4d0011]">
+          <DialogTitle className="text-xl font-bold" style={{ color: COLORS.leaf }}>
             {isLogin ? "Вход" : "Регистрация"}
           </DialogTitle>
-          <DialogDescription className="text-[#856D55]">
+          <DialogDescription style={{ color: COLORS.olive }}>
             {isLogin ? "Войдите в свой аккаунт" : "Создайте новый аккаунт"}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="space-y-2">
-            <Label htmlFor="auth-email" className="text-[#4d0011]">Email</Label>
+            <Label htmlFor="auth-email" style={{ color: COLORS.leaf }}>Email</Label>
             <Input
               id="auth-email"
               type="email"
@@ -558,11 +560,11 @@ function AuthDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open
               onChange={(e) => setEmail(e.target.value)}
               required
               data-testid="input-auth-email"
-              className="border-[#bd7880]/30 focus:border-[#4d0011]"
+              className="border-[#B7B7B6]/50"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="auth-password" className="text-[#4d0011]">Пароль</Label>
+            <Label htmlFor="auth-password" style={{ color: COLORS.leaf }}>Пароль</Label>
             <Input
               id="auth-password"
               type="password"
@@ -572,14 +574,15 @@ function AuthDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open
               required
               minLength={6}
               data-testid="input-auth-password"
-              className="border-[#bd7880]/30 focus:border-[#4d0011]"
+              className="border-[#B7B7B6]/50"
             />
           </div>
           <Button
             type="submit"
             disabled={loading}
             data-testid="button-auth-submit"
-            className="w-full bg-gradient-to-r from-[#4d0011] to-[#bd7880] hover:from-[#4d0011]/90 hover:to-[#bd7880]/90 text-white"
+            className="w-full text-white"
+            style={{ backgroundColor: COLORS.leaf }}
           >
             {loading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -595,7 +598,8 @@ function AuthDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open
             type="button"
             onClick={() => setIsLogin(!isLogin)}
             data-testid="button-toggle-auth-mode"
-            className="text-sm text-[#bd7880] hover:text-[#4d0011] transition-colors"
+            className="text-sm transition-colors"
+            style={{ color: COLORS.olive }}
           >
             {isLogin ? "Нет аккаунта? Зарегистрируйтесь" : "Уже есть аккаунт? Войдите"}
           </button>
@@ -702,9 +706,9 @@ export default function Home() {
   const currentMonth = new Date().toLocaleDateString("ru-RU", { month: "long", year: "numeric" });
 
   return (
-    <div className="min-h-screen bg-[#EDEBDD] relative overflow-hidden">
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#bd7880]/10 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#102b1f]/5 rounded-full blur-3xl" />
+    <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: COLORS.frost }}>
+      <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full blur-3xl" style={{ backgroundColor: `${COLORS.olive}10` }} />
+      <div className="absolute bottom-0 right-1/4 w-96 h-96 rounded-full blur-3xl" style={{ backgroundColor: `${COLORS.leaf}05` }} />
       
       <div className="relative max-w-4xl mx-auto px-4 py-8">
         <motion.header 
@@ -718,13 +722,14 @@ export default function Home() {
               <div className="w-20" />
             ) : user ? (
               <div className="flex items-center gap-3">
-                <span className="text-sm text-[#856D55] hidden sm:inline">{user.email}</span>
+                <span className="text-sm hidden sm:inline" style={{ color: COLORS.olive }}>{user.email}</span>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={signOut}
                   data-testid="button-logout"
-                  className="text-[#bd7880] hover:text-[#4d0011] hover:bg-[#bd7880]/10"
+                  className="hover:bg-[#B7B7B6]/20"
+                  style={{ color: COLORS.olive }}
                 >
                   <LogOut className="w-4 h-4 sm:mr-2" />
                   <span className="hidden sm:inline">Выйти</span>
@@ -736,7 +741,8 @@ export default function Home() {
                 size="sm"
                 onClick={() => setIsAuthDialogOpen(true)}
                 data-testid="button-login"
-                className="text-[#bd7880] hover:text-[#4d0011] hover:bg-[#bd7880]/10"
+                className="hover:bg-[#B7B7B6]/20"
+                style={{ color: COLORS.olive }}
               >
                 <User className="w-4 h-4 sm:mr-2" />
                 <span className="hidden sm:inline">Войти</span>
@@ -744,10 +750,10 @@ export default function Home() {
             )}
           </div>
           <div className="text-center">
-            <h1 className="text-4xl font-bold mb-2" data-testid="app-title">
-              <span className="gradient-text">Учебный трекер</span>
+            <h1 className="text-4xl font-bold mb-2" data-testid="app-title" style={{ color: COLORS.leaf }}>
+              Учебный трекер
             </h1>
-            <p style={{ color: COLORS.rose }}>
+            <p style={{ color: COLORS.olive }}>
               Отслеживайте прогресс. Достигайте целей.
             </p>
           </div>
@@ -769,12 +775,12 @@ export default function Home() {
               
               <div className="px-4 py-3 rounded-2xl glass-card shadow-md">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl" style={{ backgroundColor: COLORS.pine }}>
+                  <div className="p-2 rounded-xl" style={{ backgroundColor: COLORS.leaf }}>
                     <Target className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold" style={{ color: COLORS.pine }}>{habits.length}</p>
-                    <p className="text-xs" style={{ color: COLORS.rose }}>Активных целей</p>
+                    <p className="text-2xl font-bold" style={{ color: COLORS.leaf }}>{habits.length}</p>
+                    <p className="text-xs" style={{ color: COLORS.olive }}>Активных целей</p>
                   </div>
                 </div>
               </div>
@@ -789,14 +795,14 @@ export default function Home() {
           transition={{ delay: 0.3 }}
         >
           <div className="glass-card rounded-2xl p-5 shadow-md">
-            <h3 className="text-lg font-semibold mb-4 capitalize" style={{ color: COLORS.wine }}>{currentMonth}</h3>
+            <h3 className="text-lg font-semibold mb-4 capitalize" style={{ color: COLORS.leaf }}>{currentMonth}</h3>
             <MonthCalendar habits={habits} monthDays={monthDays} />
           </div>
         </motion.section>
 
         <section>
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold" style={{ color: COLORS.wine }}>
+            <h2 className="text-xl font-semibold" style={{ color: COLORS.leaf }}>
               Мои курсы и книги
             </h2>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -804,16 +810,16 @@ export default function Home() {
                 <Button 
                   data-testid="button-add-habit" 
                   className="gap-2 text-white shadow-lg"
-                  style={{ backgroundColor: COLORS.wine }}
+                  style={{ backgroundColor: COLORS.leaf }}
                 >
                   <Plus className="w-4 h-4" />
                   Добавить
                 </Button>
               </DialogTrigger>
-              <DialogContent className="glass-card border-[#bd7880]/30">
+              <DialogContent className="glass-card border-[#B7B7B6]/30">
                 <DialogHeader>
-                  <DialogTitle style={{ color: COLORS.wine }}>Новая учебная привычка</DialogTitle>
-                  <DialogDescription style={{ color: COLORS.rose }}>
+                  <DialogTitle style={{ color: COLORS.leaf }}>Новая учебная привычка</DialogTitle>
+                  <DialogDescription style={{ color: COLORS.olive }}>
                     Добавьте курс или книгу для отслеживания
                   </DialogDescription>
                 </DialogHeader>
@@ -824,7 +830,7 @@ export default function Home() {
                       value={newHabitName}
                       onChange={(e) => setNewHabitName(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && addHabit()}
-                      className="bg-white/50 border-[#bd7880]/30"
+                      className="bg-white/50 border-[#B7B7B6]/30"
                       data-testid="input-habit-name"
                     />
                   </div>
@@ -834,8 +840,8 @@ export default function Home() {
                       onClick={() => setNewHabitType("course")}
                       className={`flex-1 ${newHabitType === "course" ? "text-white" : ""}`}
                       style={{ 
-                        backgroundColor: newHabitType === "course" ? COLORS.wine : undefined,
-                        borderColor: COLORS.rose
+                        backgroundColor: newHabitType === "course" ? COLORS.leaf : undefined,
+                        borderColor: COLORS.stone
                       }}
                       data-testid="button-type-course"
                     >
@@ -847,8 +853,8 @@ export default function Home() {
                       onClick={() => setNewHabitType("book")}
                       className={`flex-1 ${newHabitType === "book" ? "text-white" : ""}`}
                       style={{ 
-                        backgroundColor: newHabitType === "book" ? COLORS.pine : undefined,
-                        borderColor: COLORS.rose
+                        backgroundColor: newHabitType === "book" ? COLORS.acorn : undefined,
+                        borderColor: COLORS.stone
                       }}
                       data-testid="button-type-book"
                     >
@@ -859,7 +865,7 @@ export default function Home() {
                   <Button 
                     onClick={addHabit} 
                     className="w-full text-white" 
-                    style={{ backgroundColor: COLORS.wine }}
+                    style={{ backgroundColor: COLORS.leaf }}
                     data-testid="button-confirm-add"
                   >
                     Добавить
@@ -878,17 +884,17 @@ export default function Home() {
               >
                 <div 
                   className="w-20 h-20 mx-auto mb-6 rounded-2xl flex items-center justify-center"
-                  style={{ backgroundColor: `${COLORS.rose}30` }}
+                  style={{ backgroundColor: `${COLORS.stone}30` }}
                 >
-                  <BookOpen className="w-10 h-10" style={{ color: COLORS.wine }} />
+                  <BookOpen className="w-10 h-10" style={{ color: COLORS.leaf }} />
                 </div>
-                <p className="mb-6" style={{ color: COLORS.rose }}>
+                <p className="mb-6" style={{ color: COLORS.olive }}>
                   Начните отслеживать свои учебные привычки
                 </p>
                 <Button
                   onClick={() => setIsDialogOpen(true)}
                   className="text-white"
-                  style={{ backgroundColor: COLORS.wine }}
+                  style={{ backgroundColor: COLORS.leaf }}
                   data-testid="button-add-first"
                 >
                   <Plus className="w-4 h-4 mr-2" />

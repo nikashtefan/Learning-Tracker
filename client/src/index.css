@@ -51,10 +51,11 @@
   --color-accent-border: var(--accent-border);
   --color-destructive-border: var(--destructive-border);
 
-  --color-rose: #bd7880;
-  --color-pine: #102b1f;
-  --color-wine: #4d0011;
-  --color-pink: #ffd9d9;
+  --color-frost: #F0EFEE;
+  --color-stone: #B7B7B6;
+  --color-olive: #9B907F;
+  --color-acorn: #726352;
+  --color-leaf: #4F5141;
 }
 
 :root {
@@ -209,27 +210,20 @@
     inset: -1px;
   }
 
-  .gradient-text {
-    background: linear-gradient(135deg, #4d0011 0%, #bd7880 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
   .glass-card {
     background: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(189, 120, 128, 0.2);
+    border: 1px solid rgba(183, 183, 182, 0.3);
   }
 
-  .wine-card {
-    background: linear-gradient(135deg, rgba(77, 0, 17, 0.05) 0%, rgba(189, 120, 128, 0.1) 100%);
-    border: 1px solid rgba(189, 120, 128, 0.25);
+  .leaf-card {
+    background: linear-gradient(135deg, rgba(79, 81, 65, 0.05) 0%, rgba(155, 144, 127, 0.1) 100%);
+    border: 1px solid rgba(79, 81, 65, 0.2);
   }
 
-  .pine-card {
-    background: linear-gradient(135deg, rgba(16, 43, 31, 0.05) 0%, rgba(16, 43, 31, 0.1) 100%);
-    border: 1px solid rgba(16, 43, 31, 0.2);
+  .acorn-card {
+    background: linear-gradient(135deg, rgba(114, 99, 82, 0.05) 0%, rgba(155, 144, 127, 0.1) 100%);
+    border: 1px solid rgba(114, 99, 82, 0.2);
   }
 }
 
