@@ -6,7 +6,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, BookOpen, GraduationCap, Check, RotateCcw, Trash2, Clock, Flame, Target, X } from "lucide-react";
+import { Plus, BookOpen, GraduationCap, Check, RotateCcw, Trash2, Clock, Flame, Target, X, LogOut } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 
 type TimeEntry = {
   completed: boolean;
@@ -491,6 +492,7 @@ function HabitCard({
 }
 
 export default function Home() {
+  const { user, signOut } = useAuth();
   const [habits, setHabits] = useState<Habit[]>([]);
   const [newHabitName, setNewHabitName] = useState("");
   const [newHabitType, setNewHabitType] = useState<"course" | "book">("course");
@@ -591,16 +593,36 @@ export default function Home() {
       
       <div className="relative max-w-4xl mx-auto px-4 py-8">
         <motion.header 
-          className="text-center mb-12"
+          className="mb-12"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <h1 className="text-4xl font-bold mb-2" data-testid="app-title">
-            <span className="gradient-text">Учебный трекер</span>
-          </h1>
-          <p style={{ color: COLORS.rose }}>
-            Отслеживайте прогресс. Достигайте целей.
-          </p>
+          <div className="flex items-center justify-between mb-4">
+            <div />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={signOut}
+              data-testid="button-logout"
+              className="text-[#bd7880] hover:text-[#4d0011] hover:bg-[#bd7880]/10"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Выйти
+            </Button>
+          </div>
+          <div className="text-center">
+            <h1 className="text-4xl font-bold mb-2" data-testid="app-title">
+              <span className="gradient-text">Учебный трекер</span>
+            </h1>
+            <p style={{ color: COLORS.rose }}>
+              Отслеживайте прогресс. Достигайте целей.
+            </p>
+            {user && (
+              <p className="text-sm mt-2" style={{ color: COLORS.rose }}>
+                {user.email}
+              </p>
+            )}
+          </div>
         </motion.header>
 
         <motion.section 
