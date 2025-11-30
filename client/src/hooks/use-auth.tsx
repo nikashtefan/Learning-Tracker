@@ -6,6 +6,7 @@ type AuthContextType = {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  available: boolean;
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -18,7 +19,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const available = supabase !== null;
+
   useEffect(() => {
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -37,6 +45,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string) => {
+    if (!supabase) {
+      return { error: new Error("Authentication not configured") };
+    }
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -45,6 +56,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
+    if (!supabase) {
+      return { error: new Error("Authentication not configured") };
+    }
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -53,11 +67,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    if (!supabase) return;
     await supabase.auth.signOut();
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, available, signUp, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );

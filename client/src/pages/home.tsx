@@ -694,7 +694,7 @@ function AuthDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open
 }
 
 export default function Home() {
-  const { user, signOut, loading: authLoading } = useAuth();
+  const { user, signOut, loading: authLoading, available: authAvailable } = useAuth();
   const [habits, setHabits] = useState<Habit[]>([]);
   const [newHabitName, setNewHabitName] = useState("");
   const [newHabitType, setNewHabitType] = useState<"course" | "book">("course");
@@ -823,33 +823,35 @@ export default function Home() {
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <div />
-            {authLoading ? (
-              <div className="w-20" />
-            ) : user ? (
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-gray-400 hidden sm:inline">{user.email}</span>
+            {authAvailable && (
+              authLoading ? (
+                <div className="w-20" />
+              ) : user ? (
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-400 hidden sm:inline">{user.email}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={signOut}
+                    data-testid="button-logout"
+                    className="text-gray-400 hover:text-white hover:bg-white/10"
+                  >
+                    <LogOut className="w-4 h-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Выйти</span>
+                  </Button>
+                </div>
+              ) : (
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={signOut}
-                  data-testid="button-logout"
+                  onClick={() => setIsAuthDialogOpen(true)}
+                  data-testid="button-login"
                   className="text-gray-400 hover:text-white hover:bg-white/10"
                 >
-                  <LogOut className="w-4 h-4 sm:mr-2" />
-                  <span className="hidden sm:inline">Выйти</span>
+                  <User className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Войти</span>
                 </Button>
-              </div>
-            ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsAuthDialogOpen(true)}
-                data-testid="button-login"
-                className="text-gray-400 hover:text-white hover:bg-white/10"
-              >
-                <User className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">Войти</span>
-              </Button>
+              )
             )}
           </div>
           
