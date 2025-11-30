@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, BookOpen, GraduationCap, Check, RotateCcw, Trash2, Clock, Flame, Target, X, LogOut, User, Loader2 } from "lucide-react";
+import { Plus, BookOpen, GraduationCap, Check, RotateCcw, Trash2, Clock, Flame, Target, X, LogOut, User, Loader2, Settings } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
 type TimeEntry = {
@@ -21,10 +21,16 @@ type Habit = {
   type: "course" | "book";
   dayEntries: Record<string, TimeEntry>;
   createdAt: string;
-  dailyGoal?: number;
+  dailyGoal: number;
 };
 
 const STORAGE_KEY = "learning-tracker-habits";
+const DAILY_GOAL_KEY = "learning-tracker-daily-goal";
+
+const COLORS = {
+  course: "#917F88",
+  book: "#e8c4c4",
+};
 
 function getWeekDays(): string[] {
   const today = new Date();
@@ -64,16 +70,29 @@ function getMonthDays(): string[] {
 
 function ReadingGoalsCircle({ 
   todayMinutes, 
-  goalMinutes = 30 
+  goalMinutes,
+  onGoalChange
 }: { 
   todayMinutes: number; 
-  goalMinutes?: number;
+  goalMinutes: number;
+  onGoalChange: (newGoal: number) => void;
 }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [tempGoal, setTempGoal] = useState(goalMinutes.toString());
+  
   const percentage = Math.min((todayMinutes / goalMinutes) * 100, 100);
   const radius = 80;
   const strokeWidth = 8;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
+
+  const handleSaveGoal = () => {
+    const newGoal = parseInt(tempGoal, 10);
+    if (newGoal && newGoal > 0) {
+      onGoalChange(newGoal);
+      setIsEditing(false);
+    }
+  };
 
   return (
     <div className="relative flex items-center justify-center">
@@ -112,9 +131,35 @@ function ReadingGoalsCircle({
         >
           {todayMinutes}
         </motion.span>
-        <span className="text-sm text-gray-500 mt-1">
-          из {goalMinutes} мин
-        </span>
+        
+        <Popover open={isEditing} onOpenChange={setIsEditing}>
+          <PopoverTrigger asChild>
+            <button className="text-sm text-gray-500 mt-1 hover:text-black transition-colors flex items-center gap-1 group">
+              из {goalMinutes} мин
+              <Settings className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-48 p-3 bg-white border border-gray-200">
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-black">Дневная цель</p>
+              <Input
+                type="number"
+                value={tempGoal}
+                onChange={(e) => setTempGoal(e.target.value)}
+                className="h-9 bg-gray-50 border-gray-200"
+                min="1"
+                data-testid="input-daily-goal"
+              />
+              <Button 
+                size="sm" 
+                onClick={handleSaveGoal}
+                className="w-full bg-black text-white hover:bg-gray-800"
+              >
+                Сохранить
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
     </div>
   );
@@ -141,11 +186,11 @@ function MonthCalendar({ habits, monthDays }: { habits: Habit[]; monthDays: stri
     <div className="space-y-3">
       <div className="flex items-center justify-end gap-6 mb-3 text-xs">
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-black" />
+          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS.course }} />
           <span className="text-gray-600">Курсы</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-[#e8c4c4]" />
+          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS.book }} />
           <span className="text-gray-600">Книги</span>
         </div>
       </div>
@@ -185,10 +230,12 @@ function MonthCalendar({ habits, monthDays }: { habits: Habit[]; monthDays: stri
               </span>
               <div className="flex gap-0.5">
                 <div 
-                  className={`w-1.5 h-1.5 rounded-full transition-all ${courseCompleted ? "bg-black" : "bg-gray-200"}`}
+                  className="w-1.5 h-1.5 rounded-full transition-all"
+                  style={{ backgroundColor: courseCompleted ? COLORS.course : "#e5e5e5" }}
                 />
                 <div 
-                  className={`w-1.5 h-1.5 rounded-full transition-all ${bookCompleted ? "bg-[#e8c4c4]" : "bg-gray-200"}`}
+                  className="w-1.5 h-1.5 rounded-full transition-all"
+                  style={{ backgroundColor: bookCompleted ? COLORS.book : "#e5e5e5" }}
                 />
               </div>
             </motion.div>
@@ -246,8 +293,7 @@ function DayButton({
   const [timeInput, setTimeInput] = useState("");
   const isCompleted = entry?.completed;
   
-  const isBook = habitType === "book";
-  const accentColor = isBook ? "#e8c4c4" : "#1a1a1a";
+  const accentColor = habitType === "book" ? COLORS.book : COLORS.course;
 
   const handleSave = () => {
     const minutes = timeInput ? parseInt(timeInput, 10) : undefined;
@@ -282,7 +328,7 @@ function DayButton({
           className={`
             relative flex flex-col items-center p-2.5 rounded-lg transition-all duration-300
             ${isCompleted 
-              ? "text-white shadow-sm" 
+              ? "shadow-sm" 
               : isToday 
                 ? "bg-gray-100 ring-1 ring-black" 
                 : "bg-gray-50 text-gray-600 hover:bg-gray-100"
@@ -291,7 +337,7 @@ function DayButton({
           `}
           style={{
             backgroundColor: isCompleted ? accentColor : undefined,
-            color: isCompleted && !isBook ? "white" : isCompleted && isBook ? "#1a1a1a" : undefined,
+            color: isCompleted ? (habitType === "book" ? "#1a1a1a" : "white") : undefined,
           }}
         >
           <span className="text-[10px] font-medium uppercase opacity-60">
@@ -357,7 +403,8 @@ function HabitCard({
   today, 
   onUpdateDay, 
   onReset, 
-  onDelete 
+  onDelete,
+  onUpdateGoal 
 }: { 
   habit: Habit; 
   weekDays: string[]; 
@@ -365,13 +412,27 @@ function HabitCard({
   onUpdateDay: (habitId: string, day: string, entry: TimeEntry | null) => void;
   onReset: (habitId: string) => void;
   onDelete: (habitId: string) => void;
+  onUpdateGoal: (habitId: string, goal: number) => void;
 }) {
+  const [isEditingGoal, setIsEditingGoal] = useState(false);
+  const [tempGoal, setTempGoal] = useState(habit.dailyGoal.toString());
+  
   const completedThisWeek = weekDays.filter(day => habit.dayEntries[day]?.completed).length;
   const totalMinutes = weekDays.reduce((acc, day) => acc + (habit.dayEntries[day]?.minutes || 0), 0);
+  const weeklyGoal = habit.dailyGoal * 7;
+  const goalProgress = Math.min((totalMinutes / weeklyGoal) * 100, 100);
   
   const isBook = habit.type === "book";
   const Icon = isBook ? BookOpen : GraduationCap;
-  const accentColor = isBook ? "#e8c4c4" : "#1a1a1a";
+  const accentColor = isBook ? COLORS.book : COLORS.course;
+
+  const handleSaveGoal = () => {
+    const newGoal = parseInt(tempGoal, 10);
+    if (newGoal && newGoal > 0) {
+      onUpdateGoal(habit.id, newGoal);
+      setIsEditingGoal(false);
+    }
+  };
 
   return (
     <motion.div
@@ -399,10 +460,41 @@ function HabitCard({
                   <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600">
                     {habit.type === "course" ? "Курс" : "Книга"}
                   </span>
+                  
+                  <Popover open={isEditingGoal} onOpenChange={setIsEditingGoal}>
+                    <PopoverTrigger asChild>
+                      <button className="text-xs text-gray-400 flex items-center gap-1 hover:text-black transition-colors group/goal">
+                        <Target className="w-3 h-3" />
+                        {habit.dailyGoal} мин/день
+                        <Settings className="w-3 h-3 opacity-0 group-hover/goal:opacity-100 transition-opacity" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-48 p-3 bg-white border border-gray-200">
+                      <div className="space-y-3">
+                        <p className="text-sm font-medium text-black">Цель (мин/день)</p>
+                        <Input
+                          type="number"
+                          value={tempGoal}
+                          onChange={(e) => setTempGoal(e.target.value)}
+                          className="h-9 bg-gray-50 border-gray-200"
+                          min="1"
+                          data-testid={`input-goal-${habit.id}`}
+                        />
+                        <Button 
+                          size="sm" 
+                          onClick={handleSaveGoal}
+                          className="w-full bg-black text-white hover:bg-gray-800"
+                        >
+                          Сохранить
+                        </Button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  
                   {totalMinutes > 0 && (
                     <span className="text-xs text-gray-400 flex items-center gap-1">
                       <Clock className="w-3 h-3" />
-                      {formatTime(totalMinutes)}
+                      {formatTime(totalMinutes)} за неделю
                     </span>
                   )}
                 </div>
@@ -430,17 +522,29 @@ function HabitCard({
             </div>
           </div>
 
-          <div className="flex items-center gap-3 mb-5">
+          <div className="flex items-center gap-3 mb-2">
             <div className="flex-1 h-1 bg-gray-100 rounded-full overflow-hidden">
               <motion.div 
                 className="h-full rounded-full"
                 style={{ backgroundColor: accentColor }}
                 initial={{ width: 0 }}
+                animate={{ width: `${goalProgress}%` }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+              />
+            </div>
+            <span className="text-xs text-gray-500">{totalMinutes}/{weeklyGoal} мин</span>
+          </div>
+          
+          <div className="flex items-center gap-3 mb-5">
+            <div className="flex-1 h-1 bg-gray-100 rounded-full overflow-hidden">
+              <motion.div 
+                className="h-full rounded-full bg-black"
+                initial={{ width: 0 }}
                 animate={{ width: `${(completedThisWeek / 7) * 100}%` }}
                 transition={{ duration: 0.8, ease: "easeOut" }}
               />
             </div>
-            <span className="text-sm font-medium text-gray-600">{completedThisWeek}/7</span>
+            <span className="text-sm font-medium text-gray-600">{completedThisWeek}/7 дней</span>
           </div>
 
           <div className="grid grid-cols-7 gap-2">
@@ -503,10 +607,10 @@ function AuthDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open
       <DialogContent className="bg-white border border-gray-200 max-w-sm">
         <DialogHeader className="text-center space-y-3">
           <div className="flex justify-center gap-3">
-            <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: COLORS.course }}>
               <GraduationCap className="w-5 h-5 text-white" />
             </div>
-            <div className="w-10 h-10 bg-[#e8c4c4] rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: COLORS.book }}>
               <BookOpen className="w-5 h-5 text-black" />
             </div>
           </div>
@@ -580,12 +684,21 @@ export default function Home() {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [newHabitName, setNewHabitName] = useState("");
   const [newHabitType, setNewHabitType] = useState<"course" | "book">("course");
+  const [newHabitGoal, setNewHabitGoal] = useState("30");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
+  const [dailyGoal, setDailyGoal] = useState(60);
 
   const weekDays = getWeekDays();
   const monthDays = getMonthDays();
   const today = new Date().toISOString().split("T")[0];
+
+  useEffect(() => {
+    const storedGoal = localStorage.getItem(DAILY_GOAL_KEY);
+    if (storedGoal) {
+      setDailyGoal(parseInt(storedGoal, 10));
+    }
+  }, []);
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -598,9 +711,9 @@ export default function Home() {
             habit.completedDays.forEach((day: string) => {
               dayEntries[day] = { completed: true };
             });
-            return { ...habit, dayEntries, completedDays: undefined };
+            return { ...habit, dayEntries, completedDays: undefined, dailyGoal: habit.dailyGoal || 30 };
           }
-          return habit;
+          return { ...habit, dailyGoal: habit.dailyGoal || 30 };
         });
         setHabits(migrated);
       } catch {
@@ -615,11 +728,19 @@ export default function Home() {
     }
   }, [habits]);
 
+  const handleDailyGoalChange = useCallback((newGoal: number) => {
+    setDailyGoal(newGoal);
+    localStorage.setItem(DAILY_GOAL_KEY, newGoal.toString());
+    toast.success("Цель обновлена!");
+  }, []);
+
   const addHabit = useCallback(() => {
     if (!newHabitName.trim()) {
       toast.error("Введите название");
       return;
     }
+
+    const goalValue = parseInt(newHabitGoal, 10) || 30;
 
     const newHabit: Habit = {
       id: Date.now().toString(),
@@ -627,13 +748,15 @@ export default function Home() {
       type: newHabitType,
       dayEntries: {},
       createdAt: new Date().toISOString(),
+      dailyGoal: goalValue,
     };
 
     setHabits((prev) => [...prev, newHabit]);
     setNewHabitName("");
+    setNewHabitGoal("30");
     setIsDialogOpen(false);
     toast.success("Привычка добавлена!");
-  }, [newHabitName, newHabitType]);
+  }, [newHabitName, newHabitType, newHabitGoal]);
 
   const updateDay = useCallback((habitId: string, day: string, entry: TimeEntry | null) => {
     setHabits((prev) =>
@@ -648,6 +771,15 @@ export default function Home() {
         return { ...habit, dayEntries: newEntries };
       })
     );
+  }, []);
+
+  const updateHabitGoal = useCallback((habitId: string, goal: number) => {
+    setHabits((prev) =>
+      prev.map((habit) =>
+        habit.id === habitId ? { ...habit, dailyGoal: goal } : habit
+      )
+    );
+    toast.success("Цель обновлена!");
   }, []);
 
   const resetHabit = useCallback((habitId: string) => {
@@ -733,7 +865,11 @@ export default function Home() {
           transition={{ delay: 0.2 }}
         >
           <div className="flex flex-col lg:flex-row items-center gap-12 justify-center">
-            <ReadingGoalsCircle todayMinutes={todayMinutes} goalMinutes={60} />
+            <ReadingGoalsCircle 
+              todayMinutes={todayMinutes} 
+              goalMinutes={dailyGoal}
+              onGoalChange={handleDailyGoalChange}
+            />
             
             <div className="flex flex-col gap-4">
               <StreakCounter habits={habits} />
@@ -785,6 +921,7 @@ export default function Home() {
                 </DialogHeader>
                 <div className="space-y-4 mt-4">
                   <div>
+                    <Label className="text-gray-700 mb-2 block">Название</Label>
                     <Input
                       placeholder="Название курса или книги"
                       value={newHabitName}
@@ -798,7 +935,12 @@ export default function Home() {
                     <Button
                       variant={newHabitType === "course" ? "default" : "outline"}
                       onClick={() => setNewHabitType("course")}
-                      className={`flex-1 ${newHabitType === "course" ? "bg-black text-white hover:bg-gray-800" : "border-gray-200 text-gray-700"}`}
+                      className="flex-1"
+                      style={{ 
+                        backgroundColor: newHabitType === "course" ? COLORS.course : undefined,
+                        color: newHabitType === "course" ? "white" : "#374151",
+                        borderColor: newHabitType === "course" ? COLORS.course : "#e5e7eb"
+                      }}
                       data-testid="button-type-course"
                     >
                       <GraduationCap className="w-4 h-4 mr-2" />
@@ -807,12 +949,29 @@ export default function Home() {
                     <Button
                       variant={newHabitType === "book" ? "default" : "outline"}
                       onClick={() => setNewHabitType("book")}
-                      className={`flex-1 ${newHabitType === "book" ? "bg-[#e8c4c4] text-black hover:bg-[#dbb5b5]" : "border-gray-200 text-gray-700"}`}
+                      className="flex-1"
+                      style={{ 
+                        backgroundColor: newHabitType === "book" ? COLORS.book : undefined,
+                        color: newHabitType === "book" ? "#1a1a1a" : "#374151",
+                        borderColor: newHabitType === "book" ? COLORS.book : "#e5e7eb"
+                      }}
                       data-testid="button-type-book"
                     >
                       <BookOpen className="w-4 h-4 mr-2" />
                       Книга
                     </Button>
+                  </div>
+                  <div>
+                    <Label className="text-gray-700 mb-2 block">Цель (минут в день)</Label>
+                    <Input
+                      type="number"
+                      placeholder="30"
+                      value={newHabitGoal}
+                      onChange={(e) => setNewHabitGoal(e.target.value)}
+                      className="bg-gray-50 border-gray-200"
+                      min="1"
+                      data-testid="input-habit-goal"
+                    />
                   </div>
                   <Button 
                     onClick={addHabit} 
@@ -859,6 +1018,7 @@ export default function Home() {
                     onUpdateDay={updateDay}
                     onReset={resetHabit}
                     onDelete={deleteHabit}
+                    onUpdateGoal={updateHabitGoal}
                   />
                 ))}
               </div>
