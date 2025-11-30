@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, BookOpen, GraduationCap, Check, RotateCcw, Trash2, Clock, Flame, Target, X, LogOut, User, Loader2, Settings } from "lucide-react";
+import { Plus, BookOpen, GraduationCap, Check, RotateCcw, Trash2, Clock, Flame, Target, X, LogOut, User, Loader2, Pencil } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
 type TimeEntry = {
@@ -136,7 +136,7 @@ function ReadingGoalsCircle({
           <PopoverTrigger asChild>
             <button className="text-sm text-gray-500 mt-1 hover:text-black transition-colors flex items-center gap-1 group">
               из {goalMinutes} мин
-              <Settings className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <Pencil className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
             </button>
           </PopoverTrigger>
           <PopoverContent className="w-48 p-3 bg-white border border-gray-200">
@@ -404,7 +404,7 @@ function HabitCard({
   onUpdateDay, 
   onReset, 
   onDelete,
-  onUpdateGoal 
+  onEdit 
 }: { 
   habit: Habit; 
   weekDays: string[]; 
@@ -412,25 +412,24 @@ function HabitCard({
   onUpdateDay: (habitId: string, day: string, entry: TimeEntry | null) => void;
   onReset: (habitId: string) => void;
   onDelete: (habitId: string) => void;
-  onUpdateGoal: (habitId: string, goal: number) => void;
+  onEdit: (habitId: string, name: string, goal: number) => void;
 }) {
-  const [isEditingGoal, setIsEditingGoal] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [tempName, setTempName] = useState(habit.name);
   const [tempGoal, setTempGoal] = useState(habit.dailyGoal.toString());
   
   const completedThisWeek = weekDays.filter(day => habit.dayEntries[day]?.completed).length;
   const totalMinutes = weekDays.reduce((acc, day) => acc + (habit.dayEntries[day]?.minutes || 0), 0);
-  const weeklyGoal = habit.dailyGoal * 7;
-  const goalProgress = Math.min((totalMinutes / weeklyGoal) * 100, 100);
   
   const isBook = habit.type === "book";
   const Icon = isBook ? BookOpen : GraduationCap;
   const accentColor = isBook ? COLORS.book : COLORS.course;
 
-  const handleSaveGoal = () => {
+  const handleSave = () => {
     const newGoal = parseInt(tempGoal, 10);
-    if (newGoal && newGoal > 0) {
-      onUpdateGoal(habit.id, newGoal);
-      setIsEditingGoal(false);
+    if (tempName.trim() && newGoal && newGoal > 0) {
+      onEdit(habit.id, tempName.trim(), newGoal);
+      setIsEditing(false);
     }
   };
 
@@ -460,37 +459,10 @@ function HabitCard({
                   <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600">
                     {habit.type === "course" ? "Курс" : "Книга"}
                   </span>
-                  
-                  <Popover open={isEditingGoal} onOpenChange={setIsEditingGoal}>
-                    <PopoverTrigger asChild>
-                      <button className="text-xs text-gray-400 flex items-center gap-1 hover:text-black transition-colors group/goal">
-                        <Target className="w-3 h-3" />
-                        {habit.dailyGoal} мин/день
-                        <Settings className="w-3 h-3 opacity-0 group-hover/goal:opacity-100 transition-opacity" />
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-48 p-3 bg-white border border-gray-200">
-                      <div className="space-y-3">
-                        <p className="text-sm font-medium text-black">Цель (мин/день)</p>
-                        <Input
-                          type="number"
-                          value={tempGoal}
-                          onChange={(e) => setTempGoal(e.target.value)}
-                          className="h-9 bg-gray-50 border-gray-200"
-                          min="1"
-                          data-testid={`input-goal-${habit.id}`}
-                        />
-                        <Button 
-                          size="sm" 
-                          onClick={handleSaveGoal}
-                          className="w-full bg-black text-white hover:bg-gray-800"
-                        >
-                          Сохранить
-                        </Button>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                  
+                  <span className="text-xs text-gray-400 flex items-center gap-1">
+                    <Target className="w-3 h-3" />
+                    {habit.dailyGoal} мин/день
+                  </span>
                   {totalMinutes > 0 && (
                     <span className="text-xs text-gray-400 flex items-center gap-1">
                       <Clock className="w-3 h-3" />
@@ -501,6 +473,56 @@ function HabitCard({
               </div>
             </div>
             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Popover open={isEditing} onOpenChange={(open) => {
+                setIsEditing(open);
+                if (open) {
+                  setTempName(habit.name);
+                  setTempGoal(habit.dailyGoal.toString());
+                }
+              }}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-gray-400 hover:text-black hover:bg-gray-100"
+                    data-testid={`button-edit-${habit.id}`}
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-4 bg-white border border-gray-200">
+                  <div className="space-y-4">
+                    <p className="text-sm font-medium text-black">Редактировать</p>
+                    <div className="space-y-2">
+                      <Label className="text-xs text-gray-600">Название</Label>
+                      <Input
+                        value={tempName}
+                        onChange={(e) => setTempName(e.target.value)}
+                        className="h-9 bg-gray-50 border-gray-200"
+                        data-testid={`input-edit-name-${habit.id}`}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs text-gray-600">Цель (мин/день)</Label>
+                      <Input
+                        type="number"
+                        value={tempGoal}
+                        onChange={(e) => setTempGoal(e.target.value)}
+                        className="h-9 bg-gray-50 border-gray-200"
+                        min="1"
+                        data-testid={`input-edit-goal-${habit.id}`}
+                      />
+                    </div>
+                    <Button 
+                      size="sm" 
+                      onClick={handleSave}
+                      className="w-full bg-black text-white hover:bg-gray-800"
+                    >
+                      Сохранить
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
               <Button
                 variant="ghost"
                 size="icon"
@@ -522,23 +544,11 @@ function HabitCard({
             </div>
           </div>
 
-          <div className="flex items-center gap-3 mb-2">
+          <div className="flex items-center gap-3 mb-5">
             <div className="flex-1 h-1 bg-gray-100 rounded-full overflow-hidden">
               <motion.div 
                 className="h-full rounded-full"
                 style={{ backgroundColor: accentColor }}
-                initial={{ width: 0 }}
-                animate={{ width: `${goalProgress}%` }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-              />
-            </div>
-            <span className="text-xs text-gray-500">{totalMinutes}/{weeklyGoal} мин</span>
-          </div>
-          
-          <div className="flex items-center gap-3 mb-5">
-            <div className="flex-1 h-1 bg-gray-100 rounded-full overflow-hidden">
-              <motion.div 
-                className="h-full rounded-full bg-black"
                 initial={{ width: 0 }}
                 animate={{ width: `${(completedThisWeek / 7) * 100}%` }}
                 transition={{ duration: 0.8, ease: "easeOut" }}
@@ -773,13 +783,13 @@ export default function Home() {
     );
   }, []);
 
-  const updateHabitGoal = useCallback((habitId: string, goal: number) => {
+  const editHabit = useCallback((habitId: string, name: string, goal: number) => {
     setHabits((prev) =>
       prev.map((habit) =>
-        habit.id === habitId ? { ...habit, dailyGoal: goal } : habit
+        habit.id === habitId ? { ...habit, name, dailyGoal: goal } : habit
       )
     );
-    toast.success("Цель обновлена!");
+    toast.success("Изменения сохранены!");
   }, []);
 
   const resetHabit = useCallback((habitId: string) => {
@@ -1018,7 +1028,7 @@ export default function Home() {
                     onUpdateDay={updateDay}
                     onReset={resetHabit}
                     onDelete={deleteHabit}
-                    onUpdateGoal={updateHabitGoal}
+                    onEdit={editHabit}
                   />
                 ))}
               </div>
